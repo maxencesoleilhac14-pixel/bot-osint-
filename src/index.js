@@ -330,10 +330,19 @@ bot.on('text', async (ctx) => {
       );
     } catch (e) {
       ctx.session.searchType = null;
-      await ctx.telegram.editMessageText(ctx.chat.id, statusMsg.message_id, null,
-        `❌ **Erreur de recherche**\n━━━━━━━━━━━━━━━━━━━━━\nDétail : ${esc(e.message)}\n━━━━━━━━━━━━━━━━━━━━━`,
-        { parse_mode: 'Markdown', ...Markup.inlineKeyboard([[Markup.button.callback('🔍 Réessayer', 'search_general')]]) }
-      );
+      console.error('Search error:', e.message);
+      const errMsg = `❌ **Erreur de recherche**\n━━━━━━━━━━━━━━━━━━━━━\nDétail : ${esc(e.message)}\n━━━━━━━━━━━━━━━━━━━━━`;
+      try {
+        await ctx.telegram.editMessageText(ctx.chat.id, statusMsg.message_id, null,
+          errMsg,
+          { parse_mode: 'Markdown', ...Markup.inlineKeyboard([[Markup.button.callback('🔍 Réessayer', 'search_general')]]) }
+        );
+      } catch {
+        await ctx.reply(errMsg, {
+          parse_mode: 'Markdown',
+          ...Markup.inlineKeyboard([[Markup.button.callback('🔍 Réessayer', 'search_general')]])
+        });
+      }
     }
     return;
   }
@@ -355,6 +364,8 @@ bot.catch((err) => {
   if (err.message && err.message.includes('message is not modified')) return;
   console.error('Bot error:', err.message);
   if (err.stack) console.error(err.stack.split('\n').slice(0, 6).join('\n'));
+  if (err.response) console.error('Telegram response:', JSON.stringify(err.response));
+  if (err.description) console.error('Telegram description:', err.description);
 });
 
 initDb().then(() => bot.launch()).then(() => {

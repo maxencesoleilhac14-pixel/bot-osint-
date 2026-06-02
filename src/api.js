@@ -1,54 +1,87 @@
 import fetch from 'node-fetch';
+import { Resolver } from 'dns';
 
 const BRIX_API_KEY = process.env.BRIX_API_KEY;
-const BRIX_BASES = [
-  'https://brixhub.net/api/v1',
-  'https://api.brixhub.com/api/v1'
+const BRIX_HOSTS = [
+  { host: 'brixhub.net', base: 'https://brixhub.net/api/v1' },
+  { host: 'api.brixhub.com', base: 'https://api.brixhub.com/api/v1' }
 ];
+
+const dnsResolver = new Resolver();
+dnsResolver.setServers(['8.8.8.8', '1.1.1.1']);
 
 function esc(str) {
   return String(str || '').replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
 }
 
+async function resolveHost(host) {
+  try {
+    const addrs = await dnsResolver.resolve4(host);
+    if (addrs && addrs.length) return addrs[0];
+  } catch (e) {
+    console.error(`DNS fail for ${host}: ${e.code}`);
+  }
+  return null;
+}
+
+async function tryFetch(urlStr, host, body, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  const opts = {
+    method: 'POST',
+    signal: controller.signal,
+    headers: {
+      'X-API-Key': BRIX_API_KEY,
+      'User-Agent': 'ScarfaceOSINT-Bot/1.0',
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Host': host
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+
+  try {
+    const res = await fetch(urlStr, opts);
+    clearTimeout(timer);
+    return res;
+  } catch (e) {
+    clearTimeout(timer);
+    throw e;
+  }
+}
+
 async function request(method, path, body = null) {
   let lastError = null;
 
-  for (const base of BRIX_BASES) {
-    const url = new URL(`${base}${path}`);
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
-
-    const opts = {
-      method,
-      signal: controller.signal,
-      headers: {
-        'X-API-Key': BRIX_API_KEY,
-        'User-Agent': 'ScarfaceOSINT-Bot/1.0',
-        'Accept': 'application/json'
-      }
-    };
-
-    if (body) {
-      opts.headers['Content-Type'] = 'application/json';
-      opts.body = JSON.stringify(body);
-    }
-
+  for (const entry of BRIX_HOSTS) {
+    // Try OS DNS first
     try {
-      const res = await fetch(url, opts);
-      clearTimeout(timeout);
-
+      const url = new URL(`${entry.base}${path}`);
+      const res = await tryFetch(url.href, entry.host, body, 15000);
       if (!res.ok) {
         const text = await res.text();
         lastError = new Error(`API ${res.status}: ${text}`);
         continue;
       }
-
       return res.json();
     } catch (e) {
-      clearTimeout(timeout);
       lastError = e;
-      continue;
+    }
+
+    // If OS DNS failed, try resolving with custom DNS
+    try {
+      const ip = await resolveHost(entry.host);
+      if (ip) {
+        const url = new URL(`${entry.base}${path}`);
+        url.hostname = ip;
+        const res = await tryFetch(url.href, entry.host, body, 15000);
+        if (res.ok) return res.json();
+        const text = await res.text();
+        lastError = new Error(`API ${res.status}: ${text}`);
+      }
+    } catch (e) {
+      lastError = e;
     }
   }
 

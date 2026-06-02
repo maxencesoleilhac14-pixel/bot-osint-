@@ -1,30 +1,16 @@
 import fetch from 'node-fetch';
-import { Resolver } from 'dns';
 
 const BRIX_API_KEY = process.env.BRIX_API_KEY;
-const BRIX_HOSTS = [
-  { host: 'brixhub.net', base: 'https://brixhub.net/api/v1' },
-  { host: 'api.brixhub.com', base: 'https://api.brixhub.com/api/v1' }
-];
 
-const dnsResolver = new Resolver();
-dnsResolver.setServers(['8.8.8.8', '1.1.1.1']);
+const BRIX_IPS = ['104.21.68.216', '172.67.198.245'];
+const BRIX_HOST = 'brixhub.net';
+const BRIX_PATH = '/api/v1';
 
 function esc(str) {
   return String(str || '').replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
 }
 
-async function resolveHost(host) {
-  try {
-    const addrs = await dnsResolver.resolve4(host);
-    if (addrs && addrs.length) return addrs[0];
-  } catch (e) {
-    console.error(`DNS fail for ${host}: ${e.code}`);
-  }
-  return null;
-}
-
-async function tryFetch(urlStr, host, body, timeoutMs) {
+async function tryFetch(ip, path, body, timeoutMs) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -36,13 +22,13 @@ async function tryFetch(urlStr, host, body, timeoutMs) {
       'User-Agent': 'ScarfaceOSINT-Bot/1.0',
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'Host': host
+      'Host': BRIX_HOST
     }
   };
   if (body) opts.body = JSON.stringify(body);
 
   try {
-    const res = await fetch(urlStr, opts);
+    const res = await fetch(`https://${ip}${BRIX_PATH}${path}`, opts);
     clearTimeout(timer);
     return res;
   } catch (e) {
@@ -54,11 +40,9 @@ async function tryFetch(urlStr, host, body, timeoutMs) {
 async function request(method, path, body = null) {
   let lastError = null;
 
-  for (const entry of BRIX_HOSTS) {
-    // Try OS DNS first
+  for (const ip of BRIX_IPS) {
     try {
-      const url = new URL(`${entry.base}${path}`);
-      const res = await tryFetch(url.href, entry.host, body, 15000);
+      const res = await tryFetch(ip, path, body, 20000);
       if (!res.ok) {
         const text = await res.text();
         lastError = new Error(`API ${res.status}: ${text}`);
@@ -68,25 +52,10 @@ async function request(method, path, body = null) {
     } catch (e) {
       lastError = e;
     }
-
-    // If OS DNS failed, try resolving with custom DNS
-    try {
-      const ip = await resolveHost(entry.host);
-      if (ip) {
-        const url = new URL(`${entry.base}${path}`);
-        url.hostname = ip;
-        const res = await tryFetch(url.href, entry.host, body, 15000);
-        if (res.ok) return res.json();
-        const text = await res.text();
-        lastError = new Error(`API ${res.status}: ${text}`);
-      }
-    } catch (e) {
-      lastError = e;
-    }
   }
 
   if (lastError?.name === 'AbortError') {
-    throw new Error('⌛ La recherche prend trop de temps. L\'API BrixHub semble injoignable depuis Railway. Contacte le support.');
+    throw new Error('⌛ La recherche prend trop de temps. L\'API BrixHub semble injoignable depuis Railway.');
   }
   throw new Error(`🌐 Erreur réseau : ${esc(lastError?.message || 'inconnue')}`);
 }

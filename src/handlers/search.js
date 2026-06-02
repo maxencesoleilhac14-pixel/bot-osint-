@@ -90,8 +90,15 @@ function parseInputAllPerms(text) {
     bodies.push({ nom_famille: remaining[0], flexible: true });
   }
 
+  // Recherche par téléphone seul ou email seul
+  if (bodies.length === 0) {
+    if (base.telephone) bodies.push({ telephone: base.telephone, flexible: true });
+    if (base.email) bodies.push({ email: base.email, flexible: true });
+  }
+
   if (base.telephone) bodies.forEach(b => b.telephone = base.telephone);
   if (base.email) bodies.forEach(b => b.email = base.email);
+  bodies.forEach(b => b.flexible = true);
 
   return bodies;
 }

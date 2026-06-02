@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { createServer } from 'http';
 import { Telegraf, Markup, session } from 'telegraf';
 import { initDb, upsertUser, getUser, incrementSearch, saveSearch, getSearchHistory, deleteSearchHistory, getAllUsers, getConfig, setConfig } from './db.js';
 import { isAdmin, showAdminMenu, handleAdminAction, ADMIN_ID } from './handlers/admin.js';
@@ -355,6 +356,13 @@ bot.catch((err) => {
   if (err.message && err.message.includes('message is not modified')) return;
   console.error('Bot error:', err.message);
 });
+
+const server = createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Scarface OSINT Bot - OK');
+});
+const PORT = process.env.PORT || 8080;
+server.listen(PORT, () => console.log(`🌐 Serveur HTTP sur port ${PORT}`));
 
 initDb().then(() => bot.launch()).then(() => {
   console.log('🔥 Scarface OSINT Bot démarré !');

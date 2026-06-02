@@ -354,6 +354,7 @@ bot.on('photo', async (ctx) => {
 bot.catch((err) => {
   if (err.message && err.message.includes('message is not modified')) return;
   console.error('Bot error:', err.message);
+  if (err.stack) console.error(err.stack.split('\n').slice(0, 6).join('\n'));
 });
 
 initDb().then(() => bot.launch()).then(() => {

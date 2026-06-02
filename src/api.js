@@ -185,8 +185,9 @@ function formatItemFamily(person, index, total) {
   return lines.join('\n');
 }
 
-function truncate(text, max = 3500) {
-  return text.length > max ? text.substring(0, max - 3) + '...' : text;
+function truncate(text, max = 2500) {
+  if (text.length > max) return text.substring(0, max - 3) + '...';
+  return text;
 }
 
 function formatResults(items) {

@@ -1,5 +1,4 @@
 import 'dotenv/config';
-import { createServer } from 'http';
 import { Telegraf, Markup, session } from 'telegraf';
 import { initDb, upsertUser, getUser, incrementSearch, saveSearch, getSearchHistory, deleteSearchHistory, getAllUsers, getConfig, setConfig } from './db.js';
 import { isAdmin, showAdminMenu, handleAdminAction, ADMIN_ID } from './handlers/admin.js';
@@ -96,7 +95,7 @@ bot.action('page_next', async (ctx) => {
   const page = Math.min((ctx.session.page || 0) + 1, total - 1);
   ctx.session.page = page;
   const mode = ctx.session.viewMode || 'normal';
-  await ctx.editMessageText(formatResults([items[page]]).substring(0, 4000), {
+  await ctx.editMessageText(formatResults([items[page]]), {
     parse_mode: 'Markdown',
     ...resultActionsMenu(page, total, mode)
   });
@@ -110,7 +109,7 @@ bot.action('page_prev', async (ctx) => {
   const page = Math.max((ctx.session.page || 0) - 1, 0);
   ctx.session.page = page;
   const mode = ctx.session.viewMode || 'normal';
-  await ctx.editMessageText(formatResults([items[page]]).substring(0, 4000), {
+  await ctx.editMessageText(formatResults([items[page]]), {
     parse_mode: 'Markdown',
     ...resultActionsMenu(page, total, mode)
   });
@@ -132,7 +131,7 @@ bot.action('result_deep', async (ctx) => {
     ctx.session.results = items;
     ctx.session.page = 0;
     ctx.session.viewMode = 'deep';
-    const text = items.length ? formatResultsDeep(items).substring(0, 4000) : '❌ Aucun résultat approfondi.';
+    const text = items.length ? formatResultsDeep(items) : '❌ Aucun résultat approfondi.';
     await ctx.editMessageText(text, {
       parse_mode: 'Markdown',
       ...resultActionsMenu(0, items.length, 'deep')
@@ -158,7 +157,7 @@ bot.action('result_family', async (ctx) => {
     ctx.session.results = items;
     ctx.session.page = 0;
     ctx.session.viewMode = 'family';
-    const text = items.length ? formatFamily(items).substring(0, 4000) : '❌ Aucun lien familial trouvé (même adresse, téléphone ou email).';
+    const text = items.length ? formatFamily(items) : '❌ Aucun lien familial trouvé (même adresse, téléphone ou email).';
     await ctx.editMessageText(text, {
       parse_mode: 'Markdown',
       ...resultActionsMenu(0, items.length, 'family')
@@ -181,7 +180,7 @@ bot.action('result_back', async (ctx) => {
   ctx.session.viewMode = 'normal';
   ctx.session.normalResults = null;
   ctx.session.normalPage = null;
-  await ctx.editMessageText(formatResults([items[page]]).substring(0, 4000), {
+  await ctx.editMessageText(formatResults([items[page]]), {
     parse_mode: 'Markdown',
     ...resultActionsMenu(page, items.length, 'normal')
   });
@@ -326,7 +325,7 @@ bot.on('text', async (ctx) => {
       }
 
       await ctx.telegram.editMessageText(ctx.chat.id, statusMsg.message_id, null,
-        formatResults([items[0]]).substring(0, 4000),
+        formatResults([items[0]]),
         { parse_mode: 'Markdown', ...resultActionsMenu(0, items.length) }
       );
     } catch (e) {
@@ -356,13 +355,6 @@ bot.catch((err) => {
   if (err.message && err.message.includes('message is not modified')) return;
   console.error('Bot error:', err.message);
 });
-
-const server = createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('Scarface OSINT Bot - OK');
-});
-const PORT = process.env.PORT || 8080;
-server.listen(PORT, () => console.log(`🌐 Serveur HTTP sur port ${PORT}`));
 
 initDb().then(() => bot.launch()).then(() => {
   console.log('🔥 Scarface OSINT Bot démarré !');

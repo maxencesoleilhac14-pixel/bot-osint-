@@ -185,12 +185,16 @@ function formatItemFamily(person, index, total) {
   return lines.join('\n');
 }
 
+function truncate(text, max = 3500) {
+  return text.length > max ? text.substring(0, max - 3) + '...' : text;
+}
+
 function formatResults(items) {
   if (!items || !items.length) return '❌ **Aucun résultat trouvé.**';
   const total = items.length;
   const lines = [`🔎 **${total} profil(s) trouvé(s)**`];
   items.forEach((item, i) => lines.push('', formatItem(item, i + 1, total)));
-  return lines.join('\n').substring(0, 4000);
+  return truncate(lines.join('\n'));
 }
 
 function formatResultsDeep(items) {
@@ -198,7 +202,7 @@ function formatResultsDeep(items) {
   const total = items.length;
   const lines = [`🔍 **RECHERCHE APPROFONDIE — ${total} résultat(s)**`];
   items.forEach((item, i) => lines.push('', formatItemDeep(item, i + 1, total)));
-  return lines.join('\n').substring(0, 4000);
+  return truncate(lines.join('\n'));
 }
 
 function formatFamily(items) {
@@ -206,7 +210,7 @@ function formatFamily(items) {
   const total = items.length;
   const lines = [`👨‍👩‍👧‍👦 **FAMILLE — ${total} personne(s) liée(s)**`];
   items.forEach((item, i) => lines.push('', formatItemFamily(item, i + 1, total)));
-  return lines.join('\n').substring(0, 4000);
+  return truncate(lines.join('\n'));
 }
 
 function exportToTkt(items, query) {

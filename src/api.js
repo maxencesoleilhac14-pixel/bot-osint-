@@ -1,37 +1,61 @@
 import fetch from 'node-fetch';
 
 const BRIX_API_KEY = process.env.BRIX_API_KEY;
-const BRIX_BASE = 'https://brixhub.net/api/v1';
+const BRIX_BASES = [
+  'https://brixhub.net/api/v1',
+  'https://api.brixhub.com/api/v1'
+];
 
 function esc(str) {
   return String(str || '').replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
 }
 
 async function request(method, path, body = null) {
-  const url = new URL(`${BRIX_BASE}${path}`);
+  let lastError = null;
 
-  const opts = {
-    method,
-    headers: {
-      'X-API-Key': BRIX_API_KEY,
-      'User-Agent': 'ScarfaceOSINT-Bot/1.0',
-      'Accept': 'application/json'
+  for (const base of BRIX_BASES) {
+    const url = new URL(`${base}${path}`);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+
+    const opts = {
+      method,
+      signal: controller.signal,
+      headers: {
+        'X-API-Key': BRIX_API_KEY,
+        'User-Agent': 'ScarfaceOSINT-Bot/1.0',
+        'Accept': 'application/json'
+      }
+    };
+
+    if (body) {
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(body);
     }
-  };
 
-  if (body) {
-    opts.headers['Content-Type'] = 'application/json';
-    opts.body = JSON.stringify(body);
+    try {
+      const res = await fetch(url, opts);
+      clearTimeout(timeout);
+
+      if (!res.ok) {
+        const text = await res.text();
+        lastError = new Error(`API ${res.status}: ${text}`);
+        continue;
+      }
+
+      return res.json();
+    } catch (e) {
+      clearTimeout(timeout);
+      lastError = e;
+      continue;
+    }
   }
 
-  const res = await fetch(url, opts);
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(esc(`API ${res.status}: ${text}`));
+  if (lastError?.name === 'AbortError') {
+    throw new Error('⌛ La recherche prend trop de temps. L\'API BrixHub semble injoignable depuis Railway. Contacte le support.');
   }
-
-  return res.json();
+  throw new Error(`🌐 Erreur réseau : ${esc(lastError?.message || 'inconnue')}`);
 }
 
 function fieldLabel(key) {

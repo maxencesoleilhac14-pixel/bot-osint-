@@ -229,9 +229,15 @@ function mergeResults(arrays) {
 
 async function searchGeneral(bodies) {
   if (!Array.isArray(bodies)) bodies = [bodies];
-  const promises = bodies.map(b => request('POST', '/search', b).then(extractResults).catch(() => []));
+  let lastError = null;
+  const promises = bodies.map(b =>
+    request('POST', '/search', b)
+      .then(extractResults)
+      .catch(e => { lastError = e; return []; })
+  );
   const results = await Promise.all(promises);
   const items = mergeResults(results);
+  if (!items.length && lastError) throw lastError;
   return { items, raw: { combined: true, queries: bodies.length } };
 }
 

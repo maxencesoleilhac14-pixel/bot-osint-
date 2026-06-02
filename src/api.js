@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import https from 'https';
 
 const BRIX_API_KEY = process.env.BRIX_API_KEY;
 
@@ -10,31 +10,43 @@ function esc(str) {
   return String(str || '').replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
 }
 
-async function tryFetch(ip, path, body, timeoutMs) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+function httpsPost(ip, path, body, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const data = body ? JSON.stringify(body) : '';
+    const opts = {
+      hostname: ip,
+      port: 443,
+      path: `${BRIX_PATH}${path}`,
+      method: 'POST',
+      headers: {
+        'X-API-Key': BRIX_API_KEY,
+        'User-Agent': 'ScarfaceOSINT-Bot/1.0',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Host': BRIX_HOST,
+        'Content-Length': Buffer.byteLength(data)
+      },
+      rejectUnauthorized: false,
+      timeout: timeoutMs
+    };
 
-  const opts = {
-    method: 'POST',
-    signal: controller.signal,
-    headers: {
-      'X-API-Key': BRIX_API_KEY,
-      'User-Agent': 'ScarfaceOSINT-Bot/1.0',
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Host': BRIX_HOST
-    }
-  };
-  if (body) opts.body = JSON.stringify(body);
+    const req = https.request(opts, (res) => {
+      let body = '';
+      res.on('data', (chunk) => body += chunk);
+      res.on('end', () => {
+        try {
+          resolve({ status: res.statusCode, body: JSON.parse(body) });
+        } catch {
+          resolve({ status: res.statusCode, body: null, raw: body });
+        }
+      });
+    });
 
-  try {
-    const res = await fetch(`https://${ip}${BRIX_PATH}${path}`, opts);
-    clearTimeout(timer);
-    return res;
-  } catch (e) {
-    clearTimeout(timer);
-    throw e;
-  }
+    req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')); });
+    req.on('error', (e) => reject(e));
+    if (data) req.write(data);
+    req.end();
+  });
 }
 
 async function request(method, path, body = null) {
@@ -42,21 +54,17 @@ async function request(method, path, body = null) {
 
   for (const ip of BRIX_IPS) {
     try {
-      const res = await tryFetch(ip, path, body, 20000);
-      if (!res.ok) {
-        const text = await res.text();
-        lastError = new Error(`API ${res.status}: ${text}`);
+      const res = await httpsPost(ip, path, body, 15000);
+      if (res.status !== 200) {
+        lastError = new Error(`API ${res.status}: ${JSON.stringify(res.body || res.raw || '')}`);
         continue;
       }
-      return res.json();
+      return res.body;
     } catch (e) {
       lastError = e;
     }
   }
 
-  if (lastError?.name === 'AbortError') {
-    throw new Error('⌛ La recherche prend trop de temps. L\'API BrixHub semble injoignable depuis Railway.');
-  }
   throw new Error(`🌐 Erreur réseau : ${esc(lastError?.message || 'inconnue')}`);
 }
 

@@ -19,7 +19,7 @@ function httpsRequest(path, body, timeoutMs) {
       method: 'POST',
       headers: {
         'X-API-Key': BRIX_API_KEY,
-        'User-Agent': 'ScarfaceOSINT-Bot/1.0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(data)

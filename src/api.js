@@ -2,7 +2,6 @@ import https from 'https';
 
 const BRIX_API_KEY = process.env.BRIX_API_KEY;
 
-const BRIX_IPS = ['104.21.68.216', '172.67.198.245'];
 const BRIX_HOST = 'brixhub.net';
 const BRIX_PATH = '/api/v1';
 
@@ -10,11 +9,11 @@ function esc(str) {
   return String(str || '').replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
 }
 
-function httpsPost(ip, path, body, timeoutMs) {
+function httpsRequest(path, body, timeoutMs) {
   return new Promise((resolve, reject) => {
     const data = body ? JSON.stringify(body) : '';
     const opts = {
-      hostname: ip,
+      hostname: BRIX_HOST,
       port: 443,
       path: `${BRIX_PATH}${path}`,
       method: 'POST',
@@ -23,10 +22,8 @@ function httpsPost(ip, path, body, timeoutMs) {
         'User-Agent': 'ScarfaceOSINT-Bot/1.0',
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Host': BRIX_HOST,
         'Content-Length': Buffer.byteLength(data)
       },
-      rejectUnauthorized: false,
       timeout: timeoutMs
     };
 
@@ -36,11 +33,10 @@ function httpsPost(ip, path, body, timeoutMs) {
       res.on('end', () => {
         try {
           resolve({ status: res.statusCode, body: JSON.parse(body) });
-    } catch {
-      const isHtml = typeof body === 'string' && body.trim().startsWith('<!');
-      const cleanBody = isHtml ? { error: 'Cloudflare block', html: true } : null;
-      resolve({ status: res.statusCode, body: cleanBody, raw: isHtml ? 'Cloudflare challenge detected' : body });
-    }
+        } catch {
+          const isHtml = typeof body === 'string' && body.trim().startsWith('<!');
+          resolve({ status: res.statusCode, body: isHtml ? null : body, raw: body });
+        }
       });
     });
 
@@ -52,26 +48,19 @@ function httpsPost(ip, path, body, timeoutMs) {
 }
 
 async function request(method, path, body = null) {
-  let lastError = null;
-
-  for (const ip of BRIX_IPS) {
-    try {
-      const res = await httpsPost(ip, path, body, 15000);
-      if (res.status !== 200) {
-        if (res.status === 403 && res.body?.html) {
-          lastError = new Error('❌ API Brixhub bloquée par Cloudflare. Contacte le support Brixhub pour whitelister les IPs de ton serveur.');
-        } else {
-          lastError = new Error(`API ${res.status}: ${String(res.raw || res.body || '').slice(0, 200)}`);
-        }
-        continue;
+  try {
+    const res = await httpsRequest(path, body, 20000);
+    if (res.status !== 200) {
+      const isHtml = typeof res.raw === 'string' && res.raw.trim().startsWith('<!');
+      if (isHtml) {
+        throw new Error('❌ Bloqué par Cloudflare. Vérifie que User-Agent et X-API-Key sont corrects.');
       }
-      return res.body;
-    } catch (e) {
-      lastError = e;
+      throw new Error(`API ${res.status}: ${String(res.raw || '').slice(0, 200)}`);
     }
+    return res.body;
+  } catch (e) {
+    throw new Error(`🌐 Erreur réseau : ${esc(e.message || 'inconnue')}`);
   }
-
-  throw new Error(`🌐 Erreur réseau : ${esc(lastError?.message || 'inconnue')}`);
 }
 
 function fieldLabel(key) {

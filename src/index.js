@@ -331,7 +331,8 @@ bot.on('text', async (ctx) => {
     } catch (e) {
       ctx.session.searchType = null;
       console.error('Search error:', e.message);
-      const errMsg = `❌ **Erreur de recherche**\n━━━━━━━━━━━━━━━━━━━━━\nDétail : ${esc(e.message)}\n━━━━━━━━━━━━━━━━━━━━━`;
+      const detail = esc(e.message).length > 500 ? esc(e.message).slice(0, 500) + '...' : esc(e.message);
+      const errMsg = `❌ **Erreur de recherche**\n━━━━━━━━━━━━━━━━━━━━━\n${detail}\n━━━━━━━━━━━━━━━━━━━━━`;
       try {
         await ctx.telegram.editMessageText(ctx.chat.id, statusMsg.message_id, null,
           errMsg,

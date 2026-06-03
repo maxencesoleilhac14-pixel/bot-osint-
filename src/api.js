@@ -36,9 +36,11 @@ function httpsPost(ip, path, body, timeoutMs) {
       res.on('end', () => {
         try {
           resolve({ status: res.statusCode, body: JSON.parse(body) });
-        } catch {
-          resolve({ status: res.statusCode, body: null, raw: body });
-        }
+    } catch {
+      const isHtml = typeof body === 'string' && body.trim().startsWith('<!');
+      const cleanBody = isHtml ? { error: 'Cloudflare block', html: true } : null;
+      resolve({ status: res.statusCode, body: cleanBody, raw: isHtml ? 'Cloudflare challenge detected' : body });
+    }
       });
     });
 
@@ -56,7 +58,11 @@ async function request(method, path, body = null) {
     try {
       const res = await httpsPost(ip, path, body, 15000);
       if (res.status !== 200) {
-        lastError = new Error(`API ${res.status}: ${JSON.stringify(res.body || res.raw || '')}`);
+        if (res.status === 403 && res.body?.html) {
+          lastError = new Error('❌ API Brixhub bloquée par Cloudflare. Contacte le support Brixhub pour whitelister les IPs de ton serveur.');
+        } else {
+          lastError = new Error(`API ${res.status}: ${String(res.raw || res.body || '').slice(0, 200)}`);
+        }
         continue;
       }
       return res.body;

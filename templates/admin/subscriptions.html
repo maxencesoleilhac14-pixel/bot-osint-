@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Admin - Abonnements{% endblock %}
+{% block content %}
+<div class="apage">
+    <h1>💳 Abonnements</h1>
+    <div class="fline">
+        <a href="{{ url_for('admin_subscriptions', status='all') }}" class="{{ 'active' if status_filter == 'all' }}">Tous</a>
+        <a href="{{ url_for('admin_subscriptions', status='active') }}" class="{{ 'active' if status_filter == 'active' }}">Actifs</a>
+        <a href="{{ url_for('admin_subscriptions', status='pending') }}" class="{{ 'active' if status_filter == 'pending' }}">En attente</a>
+        <a href="{{ url_for('admin_subscriptions', status='expired') }}" class="{{ 'active' if status_filter == 'expired' }}">Expirés</a>
+    </div>
+    <div class="card">
+        <div class="card-bd" style="padding:0">
+            <table class="table">
+                <thead><tr><th>ID</th><th>Utilisateur</th><th>Plan</th><th>Statut</th><th>Paiement</th><th>Notes</th><th>Début</th><th>Fin</th><th></th></tr></thead>
+                <tbody>
+                    {% for sub in subscriptions %}
+                    <tr>
+                        <td>{{ sub.id }}</td><td>{{ sub.user.username }}</td><td>{{ sub.plan|capitalize }}</td>
+                        <td>{% if sub.is_active %}<span class="badge badge-green">Actif</span>{% elif sub.payment_status == 'pending' %}<span class="badge badge-yellow">En attente</span>{% elif sub.payment_status == 'rejected' %}<span class="badge badge-red">Rejeté</span>{% else %}<span class="badge badge-red">Inactif</span>{% endif %}</td>
+                        <td>{{ sub.payment_method or '-' }}</td>
+                        <td style="font-size:.76em;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ sub.notes or '-' }}</td>
+                        <td>{{ sub.start_date.strftime('%d/%m/%Y') if sub.start_date else '-' }}</td>
+                        <td>{{ sub.end_date.strftime('%d/%m/%Y') if sub.end_date else 'Illimité' }}</td>
+                        <td>{% if sub.payment_status == 'pending' %}<form method="POST" action="{{ url_for('admin_approve_subscription', sub_id=sub.id) }}" style="display:inline"><button type="submit" class="btn btn-sm btn-success">✅</button></form><form method="POST" action="{{ url_for('admin_reject_subscription', sub_id=sub.id) }}" style="display:inline"><button type="submit" class="btn btn-sm btn-danger">❌</button></form>{% endif %}</td>
+                    </tr>
+                    {% else %}<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--text3)">Aucun abonnement</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

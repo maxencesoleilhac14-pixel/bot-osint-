@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Admin{% endblock %}
+{% block content %}
+<div class="apage">
+    <h1>👑 Administration</h1>
+    <div class="astats">
+        <div class="asc"><span class="n">{{ total_users }}</span><span class="d">Utilisateurs</span></div>
+        <div class="asc"><span class="n">{{ active_subs }}</span><span class="d">Abonnements</span></div>
+        <div class="asc"><span class="n">{{ total_searches }}</span><span class="d">Recherches</span></div>
+        <div class="asc"><span class="n" style="color:var(--yellow)">{{ pending_payments }}</span><span class="d">En attente</span></div>
+    </div>
+    <div class="alinks">
+        <a href="{{ url_for('admin_users') }}">👥 Utilisateurs</a>
+        <a href="{{ url_for('admin_subscriptions') }}">💳 Abonnements</a>
+        <a href="{{ url_for('admin_searches') }}">📜 Recherches</a>
+        <a href="{{ url_for('admin_brix_quota') }}">📊 Quota</a>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+        <div class="card-hd"><span>✈️ Menu Button Telegram</span></div>
+        <div class="card-bd">
+            <form method="POST" action="{{ url_for('admin_update_menu') }}" style="display:inline">
+                <button type="submit" class="btn btn-primary btn-sm">🔄 Mettre à jour le Menu Button</button>
+            </form>
+            <a href="{{ url_for('admin_tunnel_status') }}" class="btn btn-outline btn-sm">📊 Statut tunnel</a>
+            <form method="POST" action="{{ url_for('admin_restart_tunnel') }}" style="display:inline">
+                <button type="submit" class="btn btn-sm" style="background:rgba(251,191,36,.15);color:var(--yellow);border:1px solid rgba(251,191,36,.3)">🔄 Relancer le tunnel</button>
+            </form>
+            <p style="font-size:.72em;color:var(--text3);margin-top:6px">Le tunnel_manager.py gère le tunnel cloudflared automatiquement. Utilise "Relancer" si le tunnel tombe.</p>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-hd"><span>Derniers inscrits</span></div>
+        <div class="card-bd" style="padding:0">
+            <table class="table">
+                <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Date</th><th></th></tr></thead>
+                <tbody>
+                    {% for u in recent_users %}
+                    <tr><td>{{ u.id }}</td><td>{{ u.username }}</td><td>{{ u.email }}</td><td>{{ u.created_at.strftime('%d/%m/%Y') }}</td><td><a href="{{ url_for('admin_user_detail', user_id=u.id) }}" class="btn btn-sm">Voir</a></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

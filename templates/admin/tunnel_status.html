@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Admin - Tunnel{% endblock %}
+{% block content %}
+<div class="apage">
+    <h1>✈️ Statut du Tunnel</h1>
+    <div class="astats">
+        <div class="asc"><span class="n">{{ '✅ Actif' if status.active else '❌ Inactif' }}</span><span class="d">Statut</span></div>
+        <div class="asc"><span class="n" style="font-family:var(--mono);font-size:.78em">{{ status.url or '-' }}</span><span class="d">URL</span></div>
+        <div class="asc"><span class="n">{{ status.started or '-' }}</span><span class="d">Démarré le</span></div>
+    </div>
+    <div class="card" style="margin-top:14px">
+        <div class="card-bd" style="padding:16px">
+            <p style="font-size:.82em;color:var(--text2)">Le tunnel_manager.py tourne en arrière-plan et surveille le tunnel. Si l'URL change, il met à jour BotFather automatiquement.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

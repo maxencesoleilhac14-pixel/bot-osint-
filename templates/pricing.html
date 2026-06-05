@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Tarifs{% endblock %}
+{% block content %}
+<div class="ppage">
+    <div class="phdr">
+        <h1>💰 Plans</h1>
+        <p>{{ free_requests }} recherches gratuites/jour</p>
+    </div>
+    <div class="pgrid">
+        <div class="pcard2">
+            <h3>🆓 Gratuit</h3>
+            <div class="pr">0 €</div>
+            <div class="prp"></div>
+            <ul><li>✅ {{ free_requests }} recherches/jour</li><li>✅ Tous les modes</li></ul>
+            {% if current_user.is_authenticated %}<span class="btn btn-outline btn-block" style="pointer-events:none;opacity:.5">Actuel</span>{% else %}<a href="{{ url_for('register') }}" class="btn btn-outline btn-block">S'inscrire</a>{% endif %}
+        </div>
+        {% for key, plan in pricing.items() %}
+        <div class="pcard2 {{ 'pop' if key == 'yearly' }}">
+            {% if key == 'yearly' %}<span style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:2px 14px;border-radius:20px;font-size:.68em;font-weight:700">POPULAIRE</span>{% endif %}
+            <h3>{{ plan.name }}</h3>
+            <div class="pr">{{ plan.price }} €</div>
+            <div class="prp">{% if key == 'lifetime' %}À vie{% else %}/ mois{% endif %}</div>
+            <ul>
+                <li>✅ {% if plan.requests_label %}{{ plan.requests_label }}{% else %}{{ plan.requests_per_day }} recherches/jour{% endif %}</li>
+                <li>✅ Tous les modes</li>
+                {% if key == 'lifetime' %}<li>🔥 VIP à vie</li>{% elif key == 'yearly' %}<li>💰 2 mois offerts</li>{% endif %}
+            </ul>
+            {% if current_user.is_authenticated %}
+                {% if current_user.has_active_subscription() %}<span class="btn btn-outline btn-block" style="pointer-events:none;opacity:.5">Déjà abonné</span>{% else %}<a href="{{ url_for('subscribe', plan=key) }}" class="btn btn-primary btn-block">Souscrire</a>{% endif %}
+            {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-block">S'inscrire</a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

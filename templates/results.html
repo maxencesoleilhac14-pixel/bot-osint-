@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Résultats{% endblock %}
+{% block content %}
+<div class="rpage">
+    <div class="rtop">
+        <h1>📋 Résultats</h1>
+        <div class="rmeta">
+            {% if error %}
+                <span class="badge badge-red">❌ Erreur</span>
+            {% else %}
+                <span class="badge badge-green">✅ {{ total }} profil(s)</span>
+                <span class="badge">{{ elapsed }}ms</span>
+                <span class="badge">📊 {{ quota_remaining }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% if error %}
+        <div class="ebox"><p>{{ error }}</p></div>
+    {% elif api_error and api_error.type == "unavailable" %}
+        <div class="ebox"><p>⚠️ Le service de données est temporairement indisponible. Réessaie dans quelques instants.</p></div>
+    {% elif mode == "email" and breach_data %}
+    <div class="card" style="padding:20px;margin-bottom:14px">
+        <h2 style="font-size:.95em;margin-bottom:10px">🔑 Mots de passe et fuites</h2>
+        {% for b in breach_data %}
+        <div class="r"><span class="l">🔓 Source</span><span class="v" style="font-family:var(--mono);font-size:.82em">{{ b.get('source', b.get('name', b.get('domain', '?'))) }}</span></div>
+        {% if b.get('email') or b.get('login') %}<div class="r"><span class="l">📧 Identifiant</span><span class="v" style="font-size:.82em">{{ b.get('email', b.get('login', '')) }}</span></div>{% endif %}
+        {% if b.get('password') %}<div class="r"><span class="l">🔑 Mot de passe</span><span class="v" style="font-family:var(--mono);color:var(--yellow);font-size:.82em">{{ b.get('password', '') }}</span></div>{% endif %}
+        {% if b.get('date') %}<div class="r"><span class="l">📅 Date</span><span class="v" style="font-size:.82em">{{ b.get('date', '') }}</span></div>{% endif %}
+        {% if not loop.last %}<hr style="border-color:var(--glass-border);margin:6px 0">{% endif %}
+        {% endfor %}
+    </div>
+    {% elif results %}
+        {% for profile in results %}
+        {% set nom = profile.get('nom_famille', '') %}
+        {% set prenom = profile.get('prenom', '') %}
+        {% set affich = profile.get('nom_affichage', '') %}
+        {% set login = profile.get('nom_utilisateur', '') %}
+        {% set email = profile.get('email', '') %}
+        {% set tel = profile.get('telephone', '') %}
+        {% set ip = profile.get('adresse_ip', '') %}
+        {% set adr = profile.get('adresse', '') %}
+        {% set cp = profile.get('code_postal', '') %}
+        {% set ville = profile.get('ville', '') %}
+        {% set country = profile.get('pays', '') %}
+        {% set genre = profile.get('genre', '') %}
+        {% set ddn = profile.get('date_naissance') or profile.get('annee_naissance') %}
+        {% set age = profile.get('age', '') %}
+        {% set conf = profile.get('_confidence', 0) %}
+        {% set sources = profile.get('_sources', []) %}
+        {% set domain = profile.get('domaine', '') %}
+        {% set company = profile.get('entreprise', '') or profile.get('societe', '') %}
+        {% set nir = profile.get('nir', '') %}
+        {% set comp_adr = profile.get('complement_adresse', '') %}
+        {% set fonction = profile.get('fonction', '') %}
+        <div class="pcard">
+            <div class="ph">👤 Profil #{{ loop.index }}</div>
+            <div class="pb">
+                {% if prenom or nom %}<div class="r"><span class="l">🪪 Nom</span><span class="v">{{ (prenom + ' ' + nom).strip() }}</span></div>{% endif %}
+                {% if affich %}<div class="r"><span class="l">💬 Pseudo</span><span class="v">{{ affich }}</span></div>{% endif %}
+                {% if login %}<div class="r"><span class="l">🔑 Login</span><span class="v">{{ login }}</span></div>{% endif %}
+                {% if nir %}<div class="r"><span class="l">🔢 NIR</span><span class="v" style="font-family:var(--mono)">{{ nir }}</span></div>{% endif %}
+                {% if ddn %}<div class="r"><span class="l">🎂 Naissance</span><span class="v">{{ ddn }}</span></div>{% endif %}
+                {% if age %}<div class="r"><span class="l">📅 Âge</span><span class="v">{{ age }} ans</span></div>{% endif %}
+                {% if genre %}<div class="r"><span class="l">⚤ Genre</span><span class="v">{{ genre }}</span></div>{% endif %}
+                {% if email %}<div class="r"><span class="l">📧 Email</span><span class="v">{{ email }}</span></div>{% endif %}
+                {% if tel %}<div class="r"><span class="l">📞 Tél</span><span class="v">{{ tel }}</span></div>{% endif %}
+                {% if ip %}<div class="r"><span class="l">🌐 IP</span><span class="v">{{ ip }}</span></div>{% endif %}
+                {% if comp_adr %}<div class="r"><span class="l">📫 Complément</span><span class="v">{{ comp_adr }}</span></div>{% endif %}
+                {% if adr or cp or ville %}<div class="r"><span class="l">🏠 Adresse</span><span class="v">{{ adr }}{{ ', ' + cp if cp }}{{ ', ' + ville if ville }}{{ ', ' + country if country }}</span></div>{% endif %}
+                {% if domain %}<div class="r"><span class="l">🌍 Domaine</span><span class="v">{{ domain }}</span></div>{% endif %}
+                {% if company %}<div class="r"><span class="l">🏢 Entreprise</span><span class="v">{{ company }}</span></div>{% endif %}
+                {% if fonction %}<div class="r"><span class="l">💼 Fonction</span><span class="v">{{ fonction }}</span></div>{% endif %}
+                {% if conf %}<div class="r"><span class="l">🎯 Confiance</span><span class="v"><span class="cbar"><span class="cfill" style="width:{{ (conf * 100)|round }}%"></span><span class="ctext">{{ (conf * 100)|round }}%</span></span></span></div>{% endif %}
+                {% if sources %}<div class="r"><span class="l">🗃️ Sources</span><span class="v">{{ sources|length }}</span></div>{% endif %}
+                {% if current_user.is_admin or current_user.has_active_subscription() %}
+                <button class="fam-btn" data-nom="{{ nom }}" data-prenom="{{ prenom }}" data-adresse="{{ adr }}" data-cp="{{ cp }}" data-ville="{{ ville }}" data-tel="{{ tel }}" data-email="{{ email }}">🌳 Détails Famille</button>
+                <div class="fam-section"><div class="fam-tree" id="fam-{{ loop.index }}"><div class="fam-load" style="color:var(--text3);font-size:.8em">🔍 Recherche des liens familiaux...</div></div></div>
+                {% else %}
+                <div style="margin-top:6px;padding:8px;background:rgba(239,68,68,.06);border-radius:6px;text-align:center;font-size:.76em;color:var(--text3)">💎 <a href="{{ url_for('pricing') }}" style="color:var(--orange)">Passe Premium</a> pour les détails famille</div>
+                {% endif %}
+                <button class="raw-btn" style="margin-top:6px;font-size:.76em;color:var(--text3);cursor:pointer;background:none;border:1px dashed var(--glass-border);padding:4px 10px;border-radius:6px;width:100%" onclick="this.nextElementSibling.classList.toggle('open');this.textContent=this.nextElementSibling.classList.contains('open')?'📄 Masquer détails bruts':'📄 Afficher détails bruts'">📄 Afficher détails bruts</button>
+                <div class="raw-section" style="display:none;margin-top:6px;padding:8px;background:rgba(0,0,0,.2);border-radius:6px;font-size:.72em;font-family:var(--mono);color:var(--text2);max-height:300px;overflow-y:auto">
+                {% for k, v in profile.items() %}
+                {% if v %}<div><span style="color:var(--orange)">{{ k }}:</span> {{ v }}</div>{% endif %}
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty"><p>Aucun profil trouvé. Essaie d'autres critères.</p></div>
+    {% endif %}
+    <div class="ra">
+        <a href="{{ url_for('search') }}" class="btn btn-primary">🔍 Nouvelle recherche</a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline">📊 Dashboard</a>
+    </div>
+</div>
+{% endblock %}

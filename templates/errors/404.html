@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Page introuvable{% endblock %}
+{% block content %}
+<div class="epage">
+    <h1>404</h1>
+    <p>Page introuvable</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">Accueil</a>
+</div>
+{% endblock %}

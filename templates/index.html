@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Plateforme OSINT{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-icon">🔥</div>
+    <h1><span>Scarface OSINT</span></h1>
+    <p>Plateforme de recherche OSINT multi-sources. Identité, email, téléphone, adresse, IP et plus.</p>
+    {% if current_user.is_authenticated %}
+        <div class="hero-actions">
+            <a href="{{ url_for('search') }}" class="btn btn-primary btn-lg">🔍 Lancer une recherche</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline btn-lg">📊 Dashboard</a>
+        </div>
+    {% else %}
+        <div class="hero-actions">
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">🚀 Commencer</a>
+            <a href="{{ url_for('pricing') }}" class="btn btn-outline btn-lg">💰 Tarifs</a>
+        </div>
+    {% endif %}
+    <div class="stats">
+        <div class="stat"><span class="ico">🪪</span><span class="num">Identité</span><span class="lbl">Nom, prénom, âge</span></div>
+        <div class="stat"><span class="ico">📧</span><span class="num">Email</span><span class="lbl">Recherche email</span></div>
+        <div class="stat"><span class="ico">📞</span><span class="num">Téléphone</span><span class="lbl">Reverse lookup</span></div>
+        <div class="stat"><span class="ico">🏠</span><span class="num">Adresse</span><span class="lbl">Code postal, ville</span></div>
+        <div class="stat"><span class="ico">🌐</span><span class="num">IP</span><span class="lbl">Adresse IP</span></div>
+        <div class="stat"><span class="ico">⚡</span><span class="num">Rapide</span><span class="lbl">Recherche libre</span></div>
+    </div>
+</section>
+
+<div class="marquee-section">
+    <div class="marquee-wrap">
+        <div class="marquee">
+            <span><strong>📡 PLUS DE 600 SOURCES INDEXÉES</strong></span>
+            <span class="sep">✦</span>
+            <span>Netflix</span><span class="sep">✦</span>
+            <span>Teams</span><span class="sep">✦</span>
+            <span>TikTok</span><span class="sep">✦</span>
+            <span>Duolingo</span><span class="sep">✦</span>
+            <span>Crunchyroll</span><span class="sep">✦</span>
+            <span>Gmail</span><span class="sep">✦</span>
+            <span>Roblox</span><span class="sep">✦</span>
+            <span>Epic Games</span><span class="sep">✦</span>
+            <span>Ubisoft</span><span class="sep">✦</span>
+            <span>Minecraft</span><span class="sep">✦</span>
+            <span>Yahoo</span><span class="sep">✦</span>
+            <span>La Poste Mobile</span><span class="sep">✦</span>
+            <span>Spotify</span><span class="sep">✦</span>
+            <span>Discord</span><span class="sep">✦</span>
+            <span>WhatsApp</span><span class="sep">✦</span>
+            <span>Telegram</span><span class="sep">✦</span>
+            <span>Snapchat</span><span class="sep">✦</span>
+            <span>Instagram</span><span class="sep">✦</span>
+            <span>Facebook</span><span class="sep">✦</span>
+            <span>Amazon</span><span class="sep">✦</span>
+            <span>PayPal</span><span class="sep">✦</span>
+            <span>Orange</span><span class="sep">✦</span>
+            <span>SFR</span><span class="sep">✦</span>
+            <span>Free</span><span class="sep">✦</span>
+            <span>Bouygues</span>
+            <span class="sep">✦</span>
+            <span><strong>📡 PLUS DE 600 SOURCES INDEXÉES</strong></span>
+            <span class="sep">✦</span>
+            <span>Netflix</span><span class="sep">✦</span>
+            <span>Teams</span><span class="sep">✦</span>
+            <span>TikTok</span><span class="sep">✦</span>
+            <span>Duolingo</span><span class="sep">✦</span>
+            <span>Crunchyroll</span><span class="sep">✦</span>
+            <span>Gmail</span><span class="sep">✦</span>
+            <span>Roblox</span><span class="sep">✦</span>
+            <span>Epic Games</span><span class="sep">✦</span>
+            <span>Ubisoft</span><span class="sep">✦</span>
+            <span>Minecraft</span><span class="sep">✦</span>
+            <span>Yahoo</span><span class="sep">✦</span>
+            <span>La Poste Mobile</span><span class="sep">✦</span>
+            <span>Spotify</span><span class="sep">✦</span>
+            <span>Discord</span><span class="sep">✦</span>
+            <span>WhatsApp</span><span class="sep">✦</span>
+            <span>Telegram</span><span class="sep">✦</span>
+            <span>Snapchat</span><span class="sep">✦</span>
+            <span>Instagram</span><span class="sep">✦</span>
+            <span>Facebook</span><span class="sep">✦</span>
+            <span>Amazon</span><span class="sep">✦</span>
+            <span>PayPal</span><span class="sep">✦</span>
+            <span>Orange</span><span class="sep">✦</span>
+            <span>SFR</span><span class="sep">✦</span>
+            <span>Free</span><span class="sep">✦</span>
+            <span>Bouygues</span>
+        </div>
+    </div>
+</div>
+
+<section class="section">
+    <h2>🚀 Fonctionnalités</h2>
+    <p class="sub">Tout ce dont tu as besoin pour tes recherches OSINT</p>
+    <div class="bento">
+        <div class="bento-card">
+            <div class="bi">🪪</div>
+            <h3>Recherche Identité</h3>
+            <p>Croise nom, prénom, date de naissance, ville et genre pour trouver des profils précis en quelques secondes.</p>
+        </div>
+        <div class="bento-card">
+            <div class="bi">📧</div>
+            <h3>Recherche Contact</h3>
+            <p>Email, téléphone, IP. Trouve les informations liées à un contact.</p>
+        </div>
+        <div class="bento-card">
+            <div class="bi">🏠</div>
+            <h3>Recherche Adresse</h3>
+            <p>Rue, code postal, ville, département.</p>
+        </div>
+        <div class="bento-card">
+            <div class="bi">🔄</div>
+            <h3>Reverse Lookup</h3>
+            <p>Email ou téléphone inversé.</p>
+        </div>
+        <div class="bento-card">
+            <div class="bi">⚡</div>
+            <h3>Recherche Rapide</h3>
+            <p>Tape tout en une ligne : "Jean Dupont 1985". Détection automatique des critères.</p>
+        </div>
+        <div class="bento-card">
+            <div class="bi">📊</div>
+            <h3>Dashboard</h3>
+            <p>Suis ta consommation et ton historique.</p>
+        </div>
+        <div class="bento-card">
+            <div class="bi">💎</div>
+            <h3>Abonnement</h3>
+            <p>Débloque plus de recherches.</p>
+        </div>
+    </div>
+</section>
+
+<section class="code-section section">
+    <div class="code-grid">
+        <div class="code-left">
+            <h2>💻 Recherche Multi-Sources</h2>
+            <p>Accède à toutes les fonctionnalités de recherche. Plus de 20 critères disponibles avec des résultats instantanés.</p>
+            <p style="color:var(--text2);font-size:.85em;margin-top:8px">Infrastructure optimisée garantissant des temps de réponse sous les 100ms.</p>
+            <a href="{{ url_for('search') }}" class="btn btn-primary">🔍 Essayer maintenant</a>
+        </div>
+        <div class="terminal">
+            <div class="terminal-bar">
+                <span class="terminal-dot"></span>
+                <span class="terminal-dot"></span>
+                <span class="terminal-dot"></span>
+                <span class="terminal-title">Requête</span>
+            </div>
+            <div class="terminal-body">
+                <span class="prompt">$</span> curl -X POST https://scarface-osint.local/search \<br>
+                &nbsp;&nbsp;-H <span class="str">"Authorization: Bearer your_key"</span> \<br>
+                &nbsp;&nbsp;-d <span class="str">'{</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"nom_famille"</span>: <span class="str">"Dupont"</span>,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"prenom"</span>: <span class="str">"Jean"</span>,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"flexible"</span>: <span class="kw">true</span><br>
+                &nbsp;&nbsp;<span class="str">}'</span><br><br>
+                <span class="cm"># Response</span><br>
+                {<br>
+                &nbsp;&nbsp;<span class="str">"status"</span>: <span class="str">"ok"</span>,<br>
+                &nbsp;&nbsp;<span class="str">"results"</span>: [<span class="fn">...</span>],<br>
+                &nbsp;&nbsp;<span class="str">"total"</span>: <span class="num">42</span><br>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <h2>🎯 Prêt à commencer ?</h2>
+    <p class="sub">Rejoins les utilisateurs de Scarface OSINT</p>
+    <div style="text-align:center;margin-top:8px">
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('search') }}" class="btn btn-primary btn-lg">🔍 Lancer une recherche</a>
+        {% else %}
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">🚀 Créer un compte gratuit</a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

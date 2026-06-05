@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Admin - Utilisateurs{% endblock %}
+{% block content %}
+<div class="apage">
+    <h1>👥 Utilisateurs</h1>
+    <form method="GET" class="sline">
+        <input type="text" name="search" value="{{ search }}" placeholder="Nom ou email...">
+        <button type="submit" class="btn btn-sm">🔍</button>
+        <a href="{{ url_for('admin_users') }}" class="btn btn-sm btn-outline">Reset</a>
+    </form>
+    <div class="card">
+        <div class="card-bd" style="padding:0">
+            <table class="table">
+                <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Abonnement</th><th>Rôle</th><th>Statut</th><th>Date</th><th></th></tr></thead>
+                <tbody>
+                    {% for u in users.items %}
+                    <tr {% if u.is_banned %}style="opacity:.4"{% endif %}>
+                        <td>{{ u.id }}</td><td>{{ u.username }}</td><td>{{ u.email }}</td>
+                        <td>{{ '✅' if u.has_active_subscription() else '❌' }}</td>
+                        <td>{{ '👑' if u.is_admin else '' }}</td>
+                        <td>{% if u.status == 'actif' %}✅{% elif u.status == 'suspendu' %}⏸️{% elif u.status == 'banni' %}🚫{% else %}{{ u.status }}{% endif %}</td>
+                        <td>{{ u.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_user_detail', user_id=u.id) }}" class="btn btn-sm">👁️</a>
+                            {% if not u.is_admin %}
+                            <form method="POST" action="{{ url_for('admin_ban_user', user_id=u.id) }}" style="display:inline">
+                                <button type="submit" class="btn btn-sm {{ 'btn-danger' if not u.is_banned else 'btn-success' }}">{{ '🚫' if not u.is_banned else '✅' }}</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="pagination">
+        {% if users.has_prev %}<a href="{{ url_for('admin_users', page=users.prev_num, search=search) }}" class="btn btn-sm">←</a>{% endif %}
+        <span>{{ users.page }} / {{ users.pages }}</span>
+        {% if users.has_next %}<a href="{{ url_for('admin_users', page=users.next_num, search=search) }}" class="btn btn-sm">→</a>{% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Profil{% endblock %}
+{% block content %}
+<div class="prof-page">
+    <h1>👤 {{ current_user.display_name or current_user.username }}</h1>
+    <form method="POST" action="{{ url_for('profile') }}">
+        <div class="card" style="padding:20px;margin-bottom:14px">
+            <h2 style="font-size:.95em;margin-bottom:14px">✏️ Modifier le profil</h2>
+            <div class="form-group"><label>Nom d'affichage</label><input type="text" name="display_name" value="{{ current_user.display_name or '' }}" placeholder="{{ current_user.username }}"></div>
+            <div class="form-group"><label>Bio</label><textarea name="bio" rows="2" maxlength="280" placeholder="Quelques mots sur toi...">{{ current_user.bio or '' }}</textarea></div>
+            <button type="submit" class="btn btn-primary btn-block">Enregistrer</button>
+        </div>
+    </form>
+    <div class="card" style="padding:20px;margin-bottom:14px">
+        <h2 style="font-size:.95em;margin-bottom:14px">📋 Informations</h2>
+        <div class="dr"><span class="l">Email</span><span class="v">{{ current_user.email }}</span></div>
+        <div class="dr"><span class="l">Membre depuis</span><span class="v">{{ current_user.created_at.strftime('%d/%m/%Y') }}</span></div>
+        <div class="dr"><span class="l">Dernière connexion</span><span class="v">{{ current_user.last_login.strftime('%d/%m/%Y %H:%M') if current_user.last_login else 'Jamais' }}</span></div>
+        <div class="dr"><span class="l">Rôle</span><span class="v">{{ 'Admin' if current_user.is_admin else 'Utilisateur' }}</span></div>
+        {% if current_user.telegram_username or current_user.telegram_first_name %}
+        <div class="dr"><span class="l">✈️ Telegram</span><span class="v">{% if current_user.telegram_photo_url %}<img src="{{ current_user.telegram_photo_url }}" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-right:4px">{% endif %}{{ current_user.telegram_first_name or '' }} {{ current_user.telegram_last_name or '' }} {% if current_user.telegram_username %}@{{ current_user.telegram_username }}{% endif %}</span></div>
+        {% endif %}
+        <div class="dr"><span class="l">Clé</span><span class="v" style="font-family:var(--mono);font-size:.78em;word-break:break-all">{{ current_user.api_key }}</span></div>
+        <form method="POST" action="{{ url_for('regenerate_api_key') }}" style="margin-top:8px" onsubmit="return confirm('Régénérer la clé ? Les intégrations existantes cesseront de fonctionner.')">
+            <button type="submit" class="btn btn-sm btn-outline">🔄 Régénérer la clé</button>
+        </form>
+    </div>
+    <div class="card" style="padding:20px;margin-bottom:14px">
+        <h2 style="font-size:.95em;margin-bottom:14px">🔑 Changer le mot de passe</h2>
+        <form method="POST" action="{{ url_for('change_password') }}">
+            <div class="form-group"><label>Mot de passe actuel</label><input type="password" name="current_password" required></div>
+            <div class="form-group"><label>Nouveau</label><input type="password" name="new_password" minlength="6" required></div>
+            <div class="form-group"><label>Confirmer</label><input type="password" name="confirm_password" required></div>
+            <button type="submit" class="btn btn-primary btn-block">Changer</button>
+        </form>
+    </div>
+    <div class="card" style="padding:20px">
+        <h2 style="font-size:.95em;margin-bottom:14px">🗑️ Historique</h2>
+        <p style="font-size:.82em;color:var(--text2);margin-bottom:10px">Efface tout ton historique de recherches.</p>
+        <form method="POST" action="{{ url_for('clear_search_history') }}" onsubmit="return confirm('Effacer tout ton historique ? Cette action est irréversible.')">
+            <button type="submit" class="btn btn-sm btn-danger">🗑️ Effacer l'historique</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

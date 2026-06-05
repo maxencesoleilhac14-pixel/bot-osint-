@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Graphe{% endblock %}
+{% block content %}
+<div class="rpage">
+    <div class="rtop">
+        <h1>🕸️ Graphe des connexions</h1>
+        <div class="rmeta">
+            <span class="badge badge-green">✅ {{ total }} profil(s)</span>
+            <span class="badge">{{ elapsed }}ms</span>
+        </div>
+    </div>
+    {% if api_error and api_error.type == "unavailable" %}
+    <div class="ebox"><p>⚠️ Le service de données est temporairement indisponible. Réessaie dans quelques instants.</p></div>
+    <div class="ra"><a href="{{ url_for('search') }}" class="btn btn-primary">🔍 Nouvelle recherche</a></div>
+{% elif results %}
+    {% set main = results[0] %}
+    <div style="display:grid;grid-template-columns:1fr 240px;gap:12px">
+        <div style="background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r);padding:10px">
+            <div id="graph" style="width:100%;height:520px;background:rgba(0,0,0,.2);border-radius:8px"></div>
+        </div>
+        <div style="background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r);padding:12px;max-height:540px;overflow-y:auto">
+            <h3 style="font-size:.82em;margin-bottom:10px">👥 Liens trouvés</h3>
+            {% if not current_user.is_admin and not current_user.has_active_subscription() %}
+            <p style="font-size:.76em;color:var(--text3);text-align:center;padding:16px 0">💎 <a href="{{ url_for('pricing') }}" style="color:var(--orange)">Abonnement Premium</a> requis</p>
+            {% elif related %}
+            {% for r in related %}
+            {% set p = r.profil %}
+            {% set nom = p.get('nom_famille', '') %}
+            {% set prenom = p.get('prenom', '') %}
+            {% set email = p.get('email', '') %}
+            {% set tel = p.get('telephone', '') %}
+            {% set ville = p.get('ville', '') %}
+            <div class="rel-item" data-pid="r{{ loop.index }}" style="padding:6px 8px;border-radius:6px;cursor:pointer;transition:all .15s;border:1px solid transparent;margin-bottom:4px;font-size:.76em" onclick="toggleRel('r{{ loop.index }}',this)">
+                <div style="font-weight:600;color:var(--orange);font-size:.8em">{{ (prenom + ' ' + nom).strip() or 'Inconnu' }}</div>
+                <div style="color:var(--text3);font-size:.7em;margin:2px 0">{{ r.lien }}</div>
+                {% if email %}<div style="color:var(--text3);font-size:.7em">{{ email }}</div>{% endif %}
+                {% if tel %}<div style="color:var(--text3);font-size:.7em">{{ tel }}</div>{% endif %}
+                {% if ville %}<div style="color:var(--text3);font-size:.7em">{{ ville }}</div>{% endif %}
+            </div>
+            {% endfor %}
+            {% elif not current_user.is_admin and not current_user.has_active_subscription() %}
+            {% elif related|length == 0 %}
+            <p style="font-size:.76em;color:var(--text3)">Aucun lien trouvé vers d'autres profils.</p>
+            {% endif %}
+            <p style="font-size:.7em;color:var(--text3);margin-top:8px">Clique pour ajouter/retirer du graphe</p>
+        </div>
+    </div>
+    <p style="font-size:.78em;color:var(--text3);text-align:center;margin:10px 0">🖱️ Molette pour zoomer — Cliquer-glisser pour naviguer</p>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/dist/vis-network.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/vis-network.min.js"></script>
+    <script>
+    (function() {
+        var allNodes = [];
+        var allEdges = [];
+        var seen = {};
+        var network;
+
+        function addNode(id, label, group) {
+            if (seen[id]) return seen[id];
+            var n = {id: id, label: label, group: group || 'person', shape: 'dot', size: 16, font: {size: 10, color: '#e0e6f0'}};
+            allNodes.push(n);
+            seen[id] = n;
+            return n;
+        }
+
+        function addEdge(from, to, label) {
+            allEdges.push({from: from, to: to, label: label, font: {size: 8, color: '#7a5a4a'}, color: {color: 'rgba(239,68,68,.2)', hover: '#ef4444'}, smooth: true});
+        }
+
+        // Personnage principal
+        var mainId = 'main';
+        {% set mainNom = main.get('nom_famille', '') %}
+        {% set mainPrenom = main.get('prenom', '') %}
+        {% set mainEmail = main.get('email', '') %}
+        {% set mainTel = main.get('telephone', '') %}
+        {% set mainAdr = main.get('adresse', '') %}
+        {% set mainVille = main.get('ville', '') %}
+        {% set mainIp = main.get('adresse_ip', '') %}
+        addNode('main', '{{ (mainPrenom + " " + mainNom).strip() or "Personne" }}', 'person');
+        {% if mainEmail %}addNode('main_email', '{{ mainEmail }}', 'email'); addEdge('main', 'main_email', 'email');{% endif %}
+        {% if mainTel %}addNode('main_tel', '{{ mainTel }}', 'phone'); addEdge('main', 'main_tel', 'tél');{% endif %}
+        {% if mainAdr %}addNode('main_adr', '{{ (mainAdr + ", " + mainVille).strip(", ") }}', 'address'); addEdge('main', 'main_adr', 'adresse');{% endif %}
+        {% if mainIp %}addNode('main_ip', '{{ mainIp }}', 'ip'); addEdge('main', 'main_ip', 'IP');{% endif %}
+
+        // Profils liés (préparés mais pas ajoutés au graphe)
+        var relNodes = {};
+        {% for r in related %}
+        {% set p = r.profil %}
+        {% set nom = p.get('nom_famille', '') %}
+        {% set prenom = p.get('prenom', '') %}
+        {% set email = p.get('email', '') %}
+        {% set tel = p.get('telephone', '') %}
+        {% set adr = p.get('adresse', '') %}
+        {% set ville = p.get('ville', '') %}
+        {% set ip = p.get('adresse_ip', '') %}
+        (function(){
+            var rid = 'r{{ loop.index }}';
+            var pname = '{{ (prenom + " " + nom).strip() }}' || 'Inconnu';
+            addNode(rid, pname, 'person');
+            {% if email %}var eid = rid + '_e'; addNode(eid, '{{ email }}', 'email'); addEdge(rid, eid, 'email');{% endif %}
+            {% if tel %}var tid = rid + '_t'; addNode(tid, '{{ tel }}', 'phone'); addEdge(rid, tid, 'tél');{% endif %}
+            {% if adr %}var aid = rid + '_a'; addNode(aid, '{{ (adr + ", " + ville).strip(", ") }}', 'address'); addEdge(rid, aid, 'adresse');{% endif %}
+            {% if ip %}var iid = rid + '_i'; addNode(iid, '{{ ip }}', 'ip'); addEdge(rid, iid, 'IP');{% endif %}
+            // Relier au personnage principal si lien commun
+            {% if tel == mainTel and mainTel %}addEdge(rid, 'main_tel', 'même tél');{% endif %}
+            {% if email == mainEmail and mainEmail %}addEdge(rid, 'main_email', 'même email');{% endif %}
+            {% if adr and mainAdr and adr == mainAdr %}addEdge(rid, 'main_adr', 'même adresse');{% endif %}
+            relNodes[rid] = false;
+        })();
+        {% endfor %}
+
+        var activeIds = ['main'];
+        // Ajouter les noeuds du personnage principal
+        if (document.getElementById('main_email')) activeIds.push('main_email');
+        if (document.getElementById('main_tel')) activeIds.push('main_tel');
+        if (document.getElementById('main_adr')) activeIds.push('main_adr');
+        if (document.getElementById('main_ip')) activeIds.push('main_ip');
+
+        // Ajouter les ids des noeuds du main
+        var mainExtra = [];
+        {% if mainEmail %}mainExtra.push('main_email');{% endif %}
+        {% if mainTel %}mainExtra.push('main_tel');{% endif %}
+        {% if mainAdr %}mainExtra.push('main_adr');{% endif %}
+        {% if mainIp %}mainExtra.push('main_ip');{% endif %}
+        activeIds = activeIds.concat(mainExtra);
+
+        function getGraph(ids) {
+            var nodes = [], edges = [], s = {};
+            allNodes.forEach(function(n) {
+                if (ids.indexOf(n.id) !== -1) { nodes.push(n); s[n.id] = true; }
+            });
+            allEdges.forEach(function(e) {
+                if (s[e.from] && s[e.to]) edges.push(e);
+            });
+            return {nodes: nodes, edges: edges};
+        }
+
+        function render(ids) {
+            var data = getGraph(ids);
+            if (network) network.destroy();
+            var container = document.getElementById('graph');
+            network = new vis.Network(container, {nodes: new vis.DataSet(data.nodes), edges: new vis.DataSet(data.edges)}, {
+                physics: {stabilization: {iterations: 100}, solver: 'forceAtlas2Based'},
+                edges: {arrows: {to: {enabled: false}}},
+                groups: {
+                    person: {color: {background: '#ef4444', border: '#fff'}, borderWidth: 2},
+                    email: {color: {background: '#f97316', border: '#fff'}},
+                    phone: {color: {background: '#eab308', border: '#fff'}},
+                    address: {color: {background: '#22c55e', border: '#fff'}},
+                    ip: {color: {background: '#3b82f6', border: '#fff'}}
+                },
+                nodes: {borderWidth: 1, font: {color: '#e0e6e0'}},
+                background: '#0d1117'
+            });
+        }
+
+        window.toggleRel = function(rid, el) {
+            if (relNodes[rid] === undefined) return;
+            // Ajouter/retirer le personnage et ses sous-noeuds
+            var ids = [rid];
+            // Ajouter les sous-noeuds de ce related
+            allNodes.forEach(function(n) {
+                if (n.id.indexOf(rid) === 0 && n.id !== rid) ids.push(n.id);
+            });
+            // Ajouter les edges de connection au main
+            allEdges.forEach(function(e) {
+                if (e.from === rid || e.to === rid) ids.push(e.from, e.to);
+            });
+
+            if (!relNodes[rid]) {
+                // Ajouter
+                ids.forEach(function(id) {
+                    if (activeIds.indexOf(id) === -1) activeIds.push(id);
+                });
+                relNodes[rid] = true;
+                el.style.opacity = '1';
+                el.style.borderColor = 'rgba(239,68,68,.3)';
+                el.style.background = 'rgba(239,68,68,.06)';
+            } else {
+                // Retirer
+                ids.forEach(function(id) {
+                    var idx = activeIds.indexOf(id);
+                    if (idx !== -1 && id !== 'main') activeIds.splice(idx, 1);
+                });
+                relNodes[rid] = false;
+                el.style.opacity = '0.4';
+                el.style.borderColor = 'transparent';
+                el.style.background = 'transparent';
+            }
+            render(activeIds);
+        };
+
+        // Marquer les profils liés comme non ajoutés
+        document.querySelectorAll('.rel-item').forEach(function(el) {
+            el.style.opacity = '0.4';
+        });
+
+        render(activeIds);
+    })();
+    </script>
+    <div class="ra">
+        <a href="{{ url_for('search') }}" class="btn btn-primary">🔍 Nouvelle recherche</a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline">📊 Dashboard</a>
+    </div>
+    {% else %}
+    <div class="empty"><p>Aucun résultat pour le graphe.</p><a href="{{ url_for('search') }}" class="btn btn-primary">🔍 Rechercher</a></div>
+    {% endif %}
+</div>
+{% endblock %}

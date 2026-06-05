@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Recherche{% endblock %}
+{% block content %}
+<div class="spage">
+    <div class="s-top">
+        <h1>🔍 Recherche</h1>
+        <div class="s-modes" id="searchMode">
+            <button class="s-mode active" data-mode="francaise">Recherche française</button>
+            <button class="s-mode" data-mode="graphe">Graphe</button>
+            <button class="s-mode" data-mode="pro">Recherche Pro</button>
+        </div>
+    </div>
+
+    <!-- RECHERCHE FRANCAISE -->
+    <div id="view-francaise" class="mode-view">
+        <div class="s-flex" style="margin-bottom:12px"><input type="checkbox" id="flexible" checked><label for="flexible">Recherche flexible</label></div>
+        <form method="POST" action="/search/results" class="sform">
+            <input type="hidden" name="mode" value="francaise">
+            <input type="hidden" name="flexible" id="flexVal" value="1">
+            <div class="s-scroll">
+                <div class="s-section">
+                    <div class="s-section-hd open" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+                        <span>🪪 Identité</span><span class="arrow">▼</span>
+                    </div>
+                    <div class="s-section-bd open">
+                        <div class="form-row">
+                            <div class="form-group"><label>Nom</label><input type="text" name="nom" placeholder="Dupont"></div>
+                            <div class="form-group"><label>Prénom</label><input type="text" name="prenom" placeholder="Jean"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Nom de naissance</label><input type="text" name="nom_naissance" placeholder="Martin"></div>
+                            <div class="form-group"><label>Nom affiché</label><input type="text" name="nom_affiche" placeholder="Jean Dupont"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="s-section">
+                    <div class="s-section-hd" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+                        <span>🎂 Naissance</span><span class="arrow">▼</span>
+                    </div>
+                    <div class="s-section-bd">
+                        <div class="form-row">
+                            <div class="form-group"><label>Jour</label><input type="text" name="jour" placeholder="15"></div>
+                            <div class="form-group"><label>Mois</label><input type="text" name="mois" placeholder="06"></div>
+                            <div class="form-group"><label>Année</label><input type="text" name="annee" placeholder="1990"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Date exacte</label><input type="date" name="date_exacte"></div>
+                            <div class="form-group"><label>Ville de naissance</label><input type="text" name="ville_naissance" placeholder="Paris"></div>
+                        </div>
+                        <div class="form-group"><label>Genre</label><select name="genre"><option value="">Tous</option><option value="M">Homme</option><option value="F">Femme</option></select></div>
+                    </div>
+                </div>
+                <div class="s-section">
+                    <div class="s-section-hd" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+                        <span>📧 Contact</span><span class="arrow">▼</span>
+                    </div>
+                    <div class="s-section-bd">
+                        <div class="form-group"><label>Email</label><input type="email" name="email" placeholder="jean@example.com"></div>
+                        <div class="form-group"><label>Téléphone</label><input type="text" name="telephone" placeholder="0612345678"></div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Nom d'utilisateur</label><input type="text" name="nom_utilisateur" placeholder="jean_d"></div>
+                            <div class="form-group"><label>Adresse IP</label><input type="text" name="ip" placeholder="192.168.1.1"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="s-section">
+                    <div class="s-section-hd" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+                        <span>🏠 Localisation</span><span class="arrow">▼</span>
+                    </div>
+                    <div class="s-section-bd">
+                        <div class="form-group"><label>Adresse</label><input type="text" name="adresse" placeholder="10 rue de la Paix"></div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Code postal</label><input type="text" name="cp" placeholder="75001"></div>
+                            <div class="form-group"><label>Ville</label><input type="text" name="ville" placeholder="Paris"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="s-section">
+                    <div class="s-section-hd" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+                        <span>🎮 FiveM / GTA RP</span><span class="arrow">▼</span>
+                    </div>
+                    <div class="s-section-bd">
+                        <div class="form-group"><label>Steam ID</label><input type="text" name="steam_id" placeholder="steam:110000123456789"></div>
+                        <div class="form-row">
+                            <div class="form-group"><label>FiveM License</label><input type="text" name="fivem_license" placeholder="license:abc123..."></div>
+                            <div class="form-group"><label>Discord ID</label><input type="text" name="discord_id" placeholder="834855528869265459"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Xbox Live</label><input type="text" name="xbl" placeholder="xbl:2535423154..."></div>
+                            <div class="form-group"><label>Live ID</label><input type="text" name="live_id" placeholder="live:844425868261"></div>
+                        </div>
+                        <div class="form-group"><label>FiveM License2</label><input type="text" name="fivem_license2" placeholder="license2:def456..."></div>
+                    </div>
+                </div>
+                <div class="s-section">
+                    <div class="s-section-hd" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+                        <span>⚙️ Champs avancés</span><span class="arrow">▼</span>
+                    </div>
+                    <div class="s-section-bd">
+                        <div class="form-row">
+                            <div class="form-group"><label>NIR (Sécu)</label><input type="text" name="nir" placeholder="1234567890123"></div>
+                            <div class="form-group"><label>IBAN</label><input type="text" name="iban" placeholder="FR76..."></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>BIC</label><input type="text" name="bic" placeholder="BNPAFRPP"></div>
+                            <div class="form-group"><label>VIN / Plaque</label><input type="text" name="vin" placeholder="AB-123-CD"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="s-act">
+                <button type="submit" class="btn btn-primary btn-lg" style="flex:1">🔍 Rechercher</button>
+                <button type="reset" class="btn btn-outline btn-lg">🗑️ Effacer</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- GRAPHE -->
+    <div id="view-graphe" class="mode-view" style="display:none">
+        <form method="POST" action="/search/results" class="sform">
+            <input type="hidden" name="mode" value="graphe">
+            <div class="form-row">
+                <div class="form-group"><label>Nom</label><input type="text" name="nom" placeholder="Dupont"></div>
+                <div class="form-group"><label>Prénom</label><input type="text" name="prenom" placeholder="Jean"></div>
+            </div>
+            <div class="form-group"><label>Email</label><input type="email" name="email" placeholder="jean@example.com"></div>
+            <div class="form-group"><label>Téléphone</label><input type="text" name="telephone" placeholder="0612345678"></div>
+            <div class="form-row">
+                <div class="form-group"><label>Adresse</label><input type="text" name="adresse" placeholder="10 rue de la Paix"></div>
+                <div class="form-group"><label>Ville</label><input type="text" name="ville" placeholder="Paris"></div>
+            </div>
+            <p style="font-size:.78em;color:var(--text3);margin:10px 0">Le graphe relie automatiquement les profils qui partagent un nom, une adresse, un email ou un téléphone.</p>
+            <button type="submit" class="btn btn-primary btn-block btn-lg">🔍 Générer le graphe</button>
+        </form>
+    </div>
+
+    <!-- RECHERCHE PRO -->
+    <div id="view-pro" class="mode-view" style="display:none">
+        <div class="sform">
+            {% if current_user.has_active_subscription() or current_user.is_admin %}
+            <h2 style="font-size:1em;margin-bottom:4px">💼 Recherche Pro</h2>
+            <p style="font-size:.82em;color:var(--text3);margin-bottom:14px">Données mondiales — 10 milliards+ d'entrées indexées.</p>
+            <form method="POST" action="/search/results">
+                <input type="hidden" name="mode" value="pro">
+                <div class="form-group"><label>Nom / Société</label><input type="text" name="nom" placeholder="Dupont"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Prénom</label><input type="text" name="prenom" placeholder="Jean"></div>
+                    <div class="form-group"><label>Email</label><input type="email" name="email" placeholder="jean@example.com"></div>
+                </div>
+                <div class="form-group"><label>Entreprise</label><input type="text" name="entreprise" placeholder="Société SARL"></div>
+                <div class="s-act">
+                    <button type="submit" class="btn btn-primary btn-lg" style="flex:1">🔍 Rechercher</button>
+                    <button type="reset" class="btn btn-outline btn-lg">🗑️ Effacer</button>
+                </div>
+            </form>
+            {% else %}
+            <div style="text-align:center;padding:20px">
+                <div style="font-size:3em;margin-bottom:10px">💼</div>
+                <h2 style="font-size:1.1em;margin-bottom:6px">Recherche Pro</h2>
+                <p style="font-size:.82em;color:var(--text2);margin-bottom:14px">Données mondiales — Accédez à 10 milliards+ de données indexées</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;margin-bottom:16px">
+                    <div style="background:rgba(239,68,68,.04);padding:12px;border-radius:8px"><div style="font-size:1.3em;font-weight:700">10 milliards+</div><div style="font-size:.7em;color:var(--text3)">Entrées indexées</div></div>
+                    <div style="background:rgba(239,68,68,.04);padding:12px;border-radius:8px"><div style="font-size:1.3em;font-weight:700">200+</div><div style="font-size:.7em;color:var(--text3)">Sources de données</div></div>
+                    <div style="background:rgba(239,68,68,.04);padding:12px;border-radius:8px"><div style="font-size:1.3em;font-weight:700">50+</div><div style="font-size:.7em;color:var(--text3)">Pays couverts</div></div>
+                    <div style="background:rgba(239,68,68,.04);padding:12px;border-radius:8px"><div style="font-size:1.3em;font-weight:700">24/7</div><div style="font-size:.7em;color:var(--text3)">Mises à jour</div></div>
+                </div>
+                <div style="font-size:2em;font-weight:700;margin-bottom:4px">10€<span style="font-size:.4em;font-weight:400;color:var(--text3)"> / mois</span></div>
+                <p style="font-size:.72em;color:var(--text3);margin-bottom:14px">Crypto anonyme ou PayPal</p>
+                <a href="{{ url_for('pricing') }}" class="btn btn-primary btn-lg">💎 Débloquer maintenant</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('flexible')?.addEventListener('change', function() {
+    document.getElementById('flexVal').value = this.checked ? '1' : '0';
+});
+document.querySelectorAll('.s-mode').forEach(b => {
+    b.addEventListener('click', function() {
+        document.querySelectorAll('.s-mode').forEach(x => x.classList.remove('active'));
+        this.classList.add('active');
+        const mode = this.dataset.mode;
+        document.querySelectorAll('.mode-view').forEach(v => v.style.display = 'none');
+        const el = document.getElementById('view-' + mode);
+        if (el) el.style.display = 'block';
+    });
+});
+document.querySelectorAll('.sform form, .sform').forEach(f => {
+    f.addEventListener('submit', function() {
+        const btn = this.querySelector('button[type=submit]');
+        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Recherche en cours...'; }
+    });
+});
+</script>
+{% endblock %}

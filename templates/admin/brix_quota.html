@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Admin - Quota{% endblock %}
+{% block content %}
+<div class="apage">
+    <h1>📊 Quota</h1>
+    <div class="astats">
+        <div class="asc"><span class="n">{{ info.get('plan', '?') }}</span><span class="d">Plan</span></div>
+        <div class="asc"><span class="n">{{ info.get('daily_quota', '?') }}</span><span class="d">Quota/jour</span></div>
+        <div class="asc"><span class="n" style="color:var(--yellow)">{{ info.get('daily_used', '?') }}</span><span class="d">Utilisé</span></div>
+        <div class="asc"><span class="n" style="font-size:.85em">{{ info.get('email', '?') }}</span><span class="d">Email</span></div>
+    </div>
+    <div class="card" style="margin-bottom:10px">
+        <div class="card-hd"><span>Headers</span></div>
+        <div class="card-bd"><pre class="code">{{ headers|tojson(indent=2) }}</pre></div>
+    </div>
+    <div class="card">
+        <div class="card-hd"><span>Données</span></div>
+        <div class="card-bd"><pre class="code">{{ info|tojson(indent=2) }}</pre></div>
+    </div>
+</div>
+{% endblock %}

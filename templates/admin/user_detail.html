@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Admin - {{ user.username }}{% endblock %}
+{% block content %}
+<div class="apage">
+    <h1>👤 {{ user.username }}</h1>
+    <div class="astats">
+        <div class="asc"><span class="n">{{ user.email }}</span><span class="d">Email</span></div>
+        <div class="asc"><span class="n">{{ '👑 Admin' if user.is_admin else '👤 User' }}</span><span class="d">Rôle</span></div>
+        <div class="asc"><span class="n">{% if user.status == 'actif' %}✅ Actif{% elif user.status == 'suspendu' %}⏸️ Suspendu{% elif user.status == 'banni' %}🚫 Banni{% else %}{{ user.status }}{% endif %}</span><span class="d">Statut</span></div>
+        <div class="asc"><span class="n">{{ user.get_remaining_requests() }}/{% if user.get_daily_quota() >= 999999 %}∞ Illimité{% else %}{{ user.get_daily_quota() }}{% endif %}</span><span class="d">Quota</span></div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+        <div class="card-hd"><span>🕵️ Enregistrement</span></div>
+        <div class="card-bd">
+            <div class="dr"><span class="l">✈️ Telegram ID</span><span class="v" style="font-family:var(--mono)">{{ user.telegram_id or '-' }}</span></div>
+            {% if user.telegram_username or user.telegram_first_name %}
+            <div class="dr"><span class="l">👤 Telegram</span><span class="v">{% if user.telegram_photo_url %}<img src="{{ user.telegram_photo_url }}" style="width:22px;height:22px;border-radius:50%;vertical-align:middle;margin-right:6px">{% endif %}{{ user.telegram_first_name or '' }} {{ user.telegram_last_name or '' }} {% if user.telegram_username %}(@{{ user.telegram_username }}){% endif %}</span></div>
+            {% endif %}
+            <div class="dr"><span class="l">🌐 IP inscription</span><span class="v" style="font-family:var(--mono)">{{ user.reg_ip or '-' }}</span></div>
+            <div class="dr"><span class="l">📱 Dernière IP</span><span class="v" style="font-family:var(--mono)">{{ user.last_ip or '-' }}</span></div>
+            {% if user.reg_user_agent %}
+            <div class="dr"><span class="l">🧩 User-Agent</span><span class="v" style="font-size:.72em;word-break:break-all;max-height:40px;overflow-y:auto">{{ user.reg_user_agent }}</span></div>
+            {% endif %}
+            {% if user.reg_headers %}
+            {% set hdrs = user.reg_headers|from_json %}
+            {% for k, v in hdrs.items() %}
+            <div class="dr"><span class="l" style="font-size:.72em">{{ k }}</span><span class="v" style="font-size:.72em;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ v }}</span></div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    {% if not user.is_admin %}
+    <div class="card" style="margin-bottom:14px">
+        <div class="card-hd"><span>🔧 Changer le statut</span></div>
+        <div class="card-bd">
+            <form method="POST" action="{{ url_for('admin_set_status', user_id=user.id) }}" style="display:flex;gap:8px;align-items:center">
+                <select name="status" style="flex:1;padding:6px 10px;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid var(--glass-border);color:var(--text)">
+                    <option value="actif" {{ 'selected' if user.status == 'actif' }}>✅ Actif</option>
+                    <option value="suspendu" {{ 'selected' if user.status == 'suspendu' }}>⏸️ Suspendu</option>
+                    <option value="banni" {{ 'selected' if user.status == 'banni' }}>🚫 Banni</option>
+                </select>
+                <button type="submit" class="btn btn-primary btn-sm">Appliquer</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+    {% if user.subscription %}
+    <div class="card" style="margin-bottom:14px">
+        <div class="card-hd"><span>💳 Abonnement</span></div>
+        <div class="card-bd">
+            <div class="dr"><span class="l">Plan</span><span class="v">{{ user.subscription.plan|capitalize }}</span></div>
+            <div class="dr"><span class="l">Statut</span><span class="v">{{ '✅ Actif' if user.subscription.is_active else '❌ Inactif' }}</span></div>
+            <div class="dr"><span class="l">Paiement</span><span class="v">{{ user.subscription.payment_status }}</span></div>
+            <div class="dr"><span class="l">Fin</span><span class="v">{{ user.subscription.end_date.strftime('%d/%m/%Y') if user.subscription.end_date else 'Illimité' }}</span></div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="card">
+        <div class="card-hd"><span>📜 Recherches (50)</span></div>
+        <div class="card-bd" style="padding:0">
+            <table class="table">
+                <thead><tr><th>Type</th><th>Requête</th><th>Résultats</th><th>Temps</th><th>Date</th></tr></thead>
+                <tbody>
+                    {% for s in searches %}
+                    <tr><td><span class="badge">{{ s.query_type }}</span></td><td style="font-family:var(--mono);font-size:.76em;color:var(--text2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.query_data[:60] if s.query_data else '-' }}</td><td>{{ s.results_count }}</td><td>{{ s.response_time_ms }}ms</td><td>{{ s.created_at.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+                    {% else %}<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--text3)">Aucune recherche</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

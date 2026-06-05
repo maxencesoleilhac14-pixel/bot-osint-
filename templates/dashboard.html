@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="dash-top">
+    <h1>👋 {{ current_user.username }}</h1>
+    <a href="{{ url_for('search') }}" class="btn btn-primary">🔍 Recherche</a>
+</div>
+<div class="qgrid">
+    <div class="qbox">
+        <div class="ico">📊</div>
+        <div>
+            <span class="lbl">Quota</span>
+            <span class="val">{{ remaining }} / {% if daily_quota >= 999999 %}∞ Illimité{% else %}{{ daily_quota }}{% endif %}</span>
+            <div class="bar"><div class="bar-fill" style="width:{{ (today_usage / daily_quota * 100)|round if daily_quota > 0 and daily_quota < 999999 else 0 }}%"></div></div>
+        </div>
+    </div>
+    <div class="qbox">
+        <div class="ico">💎</div>
+        <div>
+            <span class="lbl">Abonnement</span>
+            <span class="val">{% if current_user.is_admin %}👑 Admin{% elif current_user.has_active_subscription() %}✅ {{ current_user.subscription.plan|capitalize }}{% else %}❌ Gratuit{% endif %}</span>
+        </div>
+    </div>
+    <div class="qbox">
+        <div class="ico">🔑</div>
+        <div>
+            <span class="lbl">Clé</span>
+            <span class="val" style="font-size:.74em;font-family:var(--mono)">{{ current_user.api_key[:20] }}...</span>
+        </div>
+    </div>
+</div>
+<div class="card">
+    <div class="card-hd"><span>📜 Dernières recherches</span></div>
+    <div class="card-bd" style="padding:0">
+        {% if recent_searches %}
+        <table class="table">
+            <thead><tr><th>Type</th><th>Requête</th><th>Résultats</th><th>Temps</th><th>Date</th></tr></thead>
+            <tbody>
+                {% for s in recent_searches %}
+                <tr>
+                    <td><span class="badge badge-red">{{ s.query_type }}</span></td>
+                    <td style="font-family:var(--mono);font-size:.76em;color:var(--text2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.query_data[:50] if s.query_data else '-' }}</td>
+                    <td>{{ s.results_count }}</td>
+                    <td>{{ s.response_time_ms }}ms</td>
+                    <td>{{ s.created_at.strftime('%d/%m %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty"><p>Aucune recherche</p><a href="{{ url_for('search') }}" class="btn btn-primary">🔍 Première recherche</a></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

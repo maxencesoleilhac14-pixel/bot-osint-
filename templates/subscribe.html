@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Souscrire{% endblock %}
+{% block content %}
+<div class="subpage">
+    <h1>💳 {{ plan_info.name }}</h1>
+    <div class="subcard">
+        <h2>{{ plan_info.name }}</h2>
+        <div class="spr">{{ plan_info.price }} €</div>
+        <ul><li>✅ {{ plan_info.requests_label if plan_info.requests_label else plan_info.requests_per_day ~ ' recherches/jour' }}</li><li>✅ Tous les modes</li></ul>
+        <div class="pinfo">
+            <p><strong>Montant :</strong> {{ plan_info.price }} €</p>
+        </div>
+        <a href="{{ url_for('subscribe_oxapay', plan=plan) }}" class="btn btn-primary btn-block" style="margin-bottom:10px">💎 Payer par crypto (Oxapay)</a>
+        <div style="border-top:1px solid var(--glass-border);padding-top:12px;margin-top:4px">
+            <p style="font-size:.8em;color:var(--text3);margin-bottom:4px">Ou paie par PayPal :</p>
+            <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:8px;padding:10px;margin-bottom:10px;font-size:.78em">
+                <strong style="color:var(--red);font-size:.9em">⚠️ Envoie en "Ami·e" (Friends & Family)</strong>
+                <br>Pas de frais, validation immédiate.
+            </div>
+            <p style="font-size:.82em;margin-bottom:6px"><strong>PayPal :</strong> <code>admin@scarface-osint.local</code></p>
+            <form method="POST" action="{{ url_for('submit_payment') }}">
+                <input type="hidden" name="plan" value="{{ plan }}">
+                <div class="form-group" style="margin-bottom:8px">
+                    <label style="font-size:.78em">Ton nom/email PayPal (pour vérification)</label>
+                    <input type="text" name="paypal_name" placeholder="ton.nom@email.com" required style="width:100%;padding:6px 10px;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid var(--glass-border);color:var(--text);font-size:.82em">
+                </div>
+                <button type="submit" class="btn btn-outline btn-block" style="font-size:.85em">✅ J'ai payé via PayPal</button>
+            </form>
+        </div>
+        <a href="{{ url_for('pricing') }}" style="display:block;margin-top:10px;color:var(--text3);font-size:.8em">← Retour</a>
+    </div>
+</div>
+{% endblock %}

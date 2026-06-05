@@ -1,3 +1,11 @@
-node_modules/
-.env
+__pycache__/
+*.py[cod]
 *.db
+*.sqlite
+.env
+venv/
+.venv/
+ngrok.exe
+cloudflared.exe
+ngrok.pid
+tunnel_status.json

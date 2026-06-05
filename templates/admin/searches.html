@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Admin - Recherches{% endblock %}
+{% block content %}
+<div class="apage">
+    <h1>📜 Journal des recherches</h1>
+    <div class="card">
+        <div class="card-bd" style="padding:0">
+            <table class="table">
+                <thead><tr><th>ID</th><th>Utilisateur</th><th>Type</th><th>Requête</th><th>Résultats</th><th>Temps</th><th>Date</th></tr></thead>
+                <tbody>
+                    {% for s in searches.items %}
+                    <tr><td>{{ s.id }}</td><td>{{ s.user.username }}</td><td><span class="badge">{{ s.query_type }}</span></td><td style="font-family:var(--mono);font-size:.76em;color:var(--text2);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.query_data[:50] if s.query_data else '-' }}</td><td>{{ s.results_count }}</td><td>{{ s.response_time_ms }}ms</td><td>{{ s.created_at.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+                    {% else %}<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--text3)">Aucune recherche</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="pagination">
+        {% if searches.has_prev %}<a href="{{ url_for('admin_searches', page=searches.prev_num) }}" class="btn btn-sm">←</a>{% endif %}
+        <span>{{ searches.page }} / {{ searches.pages }}</span>
+        {% if searches.has_next %}<a href="{{ url_for('admin_searches', page=searches.next_num) }}" class="btn btn-sm">→</a>{% endif %}
+    </div>
+</div>
+{% endblock %}

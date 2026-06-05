@@ -304,12 +304,11 @@ def bot_poll():
                             "web_app": {"url": mini_app_url}
                         }]]
                     })
-        except:
+        except Exception as e:
+            log.error(f"Bot poll error: {e}")
             time.sleep(5)
 
 # ─── ERRORS ─────────────────────────────────────────────────────────────────
-
-    return render_template("register.html")
 
 @app.route("/tg-auth")
 def tg_auth():

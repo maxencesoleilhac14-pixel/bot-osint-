@@ -1192,11 +1192,9 @@ def init_db():
             u.status = "banni" if u.is_banned else "actif"
         db.session.commit()
 
-init_db()
-if not os.environ.get("WERKZEUG_RUN_MAIN"):
+if __name__ == "__main__":
+    init_db()
     t = threading.Thread(target=bot_poll, daemon=True)
     t.start()
-
-if __name__ == "__main__":
     log.info("🚀 Scarface OSINT Web démarré sur http://127.0.0.1:5000")
     app.run(host="0.0.0.0", port=5000, debug=True)

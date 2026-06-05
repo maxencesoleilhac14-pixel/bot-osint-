@@ -272,17 +272,34 @@ def bot_poll():
     global last_update_id
     public_url = app.config.get("PUBLIC_URL", "") or os.environ.get("RAILWAY_PUBLIC_DOMAIN", f"https://{os.environ.get('RAILWAY_STATIC_URL', 'localhost:5000')}")
     mini_app_url = public_url
+    # Delete webhook to enable long polling
+    try:
+        requests.get(f"{TELEGRAM_API}/deleteWebhook", timeout=10)
+        log.info("Bot webhook deleted, starting long polling")
+    except Exception as e:
+        log.error(f"Failed to delete webhook: {e}")
+    # Verify token
+    try:
+        r = requests.get(f"{TELEGRAM_API}/getMe", timeout=10)
+        me = r.json()
+        if me.get("ok"):
+            log.info(f"Bot authenticated: @{me['result'].get('username', '?')}")
+        else:
+            log.error(f"Bot token invalid: {me}")
+    except Exception as e:
+        log.error(f"Failed to get bot info: {e}")
     while True:
         try:
             url = f"{TELEGRAM_API}/getUpdates?timeout=30&offset={last_update_id + 1}"
             r = requests.get(url, timeout=35)
             data = r.json()
             if not data.get("ok"):
+                log.warning(f"getUpdates failed: {data}")
                 time.sleep(5)
                 continue
             for upd in data.get("result", []):
                 last_update_id = upd["update_id"]
-                msg = upd.get("message", {})
+                msg = upd.get("message") or upd.get("callback_query", {}).get("message") or {}
                 chat_id = msg.get("chat", {}).get("id")
                 text = (msg.get("text") or "").strip()
                 if not chat_id:

@@ -6,7 +6,7 @@ import secrets
 import hmac
 import hashlib
 import urllib.parse
-import threading
+
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -264,66 +264,62 @@ def register():
         flash("Compte créé avec succès ! Connecte-toi.", "success")
     return redirect(url_for("login"))
 
-# ─── BOT POLLING ────────────────────────────────────────────────────────────
+# ─── BOT WEBHOOK ────────────────────────────────────────────────────────────
 
-last_update_id = 0
-
-def bot_poll():
-    global last_update_id
+def handle_tg_update(update):
+    msg = update.get("message") or {}
+    chat_id = msg.get("chat", {}).get("id")
+    text = (msg.get("text") or "").strip()
+    if not chat_id:
+        return
     public_url = app.config.get("PUBLIC_URL", "") or os.environ.get("RAILWAY_PUBLIC_DOMAIN", f"https://{os.environ.get('RAILWAY_STATIC_URL', 'localhost:5000')}")
-    mini_app_url = public_url
-    # Delete webhook to enable long polling
+    if text == "/start":
+        welcome = (
+            "<b>🔥 Bienvenue sur Scarface OSINT !</b>\n\n"
+            "Plateforme de recherche OSINT professionnelle.\n\n"
+            "🔍 <b>Fonctionnalités :</b>\n"
+            "• Recherche par nom, email, téléphone, adresse\n"
+            "• Graphe de connexions\n"
+            "• Détection de liens familiaux\n"
+            "• 3 recherches gratuites/jour\n\n"
+            "⬇️ Clique ci-dessous pour ouvrir l'app :"
+        )
+        tg_send_message(chat_id, welcome, {
+            "inline_keyboard": [[{
+                "text": "🚀 Ouvrir Scarface OSINT",
+                "web_app": {"url": public_url}
+            }]]
+        })
+
+@app.route("/webhook", methods=["POST"])
+def tg_webhook():
+    update = request.get_json(silent=True)
+    if update:
+        handle_tg_update(update)
+    return "ok"
+
+def set_webhook():
+    public_url = app.config.get("PUBLIC_URL", "") or os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
+    if not public_url:
+        log.warning("PUBLIC_URL not set, cannot set webhook")
+        return
+    webhook_url = f"{public_url.rstrip('/')}/webhook"
     try:
-        requests.get(f"{TELEGRAM_API}/deleteWebhook", timeout=10)
-        log.info("Bot webhook deleted, starting long polling")
+        r = requests.get(f"{TELEGRAM_API}/setWebhook?url={webhook_url}", timeout=10)
+        data = r.json()
+        if data.get("ok"):
+            log.info(f"Webhook set to {webhook_url}")
+        else:
+            log.error(f"Failed to set webhook: {data}")
     except Exception as e:
-        log.error(f"Failed to delete webhook: {e}")
-    # Verify token
+        log.error(f"Webhook error: {e}")
     try:
         r = requests.get(f"{TELEGRAM_API}/getMe", timeout=10)
         me = r.json()
         if me.get("ok"):
             log.info(f"Bot authenticated: @{me['result'].get('username', '?')}")
-        else:
-            log.error(f"Bot token invalid: {me}")
     except Exception as e:
         log.error(f"Failed to get bot info: {e}")
-    while True:
-        try:
-            url = f"{TELEGRAM_API}/getUpdates?timeout=30&offset={last_update_id + 1}"
-            r = requests.get(url, timeout=35)
-            data = r.json()
-            if not data.get("ok"):
-                log.warning(f"getUpdates failed: {data}")
-                time.sleep(5)
-                continue
-            for upd in data.get("result", []):
-                last_update_id = upd["update_id"]
-                msg = upd.get("message") or upd.get("callback_query", {}).get("message") or {}
-                chat_id = msg.get("chat", {}).get("id")
-                text = (msg.get("text") or "").strip()
-                if not chat_id:
-                    continue
-                if text == "/start":
-                    welcome = (
-                        "<b>🔥 Bienvenue sur Scarface OSINT !</b>\n\n"
-                        "Plateforme de recherche OSINT professionnelle.\n\n"
-                        "🔍 <b>Fonctionnalités :</b>\n"
-                        "• Recherche par nom, email, téléphone, adresse\n"
-                        "• Graphe de connexions\n"
-                        "• Détection de liens familiaux\n"
-                        "• 3 recherches gratuites/jour\n\n"
-                        "⬇️ Clique ci-dessous pour ouvrir l'app :"
-                    )
-                    tg_send_message(chat_id, welcome, {
-                        "inline_keyboard": [[{
-                            "text": "🚀 Ouvrir Scarface OSINT",
-                            "web_app": {"url": mini_app_url}
-                        }]]
-                    })
-        except Exception as e:
-            log.error(f"Bot poll error: {e}")
-            time.sleep(5)
 
 # ─── ERRORS ─────────────────────────────────────────────────────────────────
 
@@ -1210,7 +1206,6 @@ def init_db():
 
 if __name__ == "__main__":
     init_db()
-    t = threading.Thread(target=bot_poll, daemon=True)
-    t.start()
+    set_webhook()
     log.info("🚀 Scarface OSINT Web démarré sur http://127.0.0.1:5000")
     app.run(host="0.0.0.0", port=5000, debug=True)

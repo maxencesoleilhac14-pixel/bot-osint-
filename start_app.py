@@ -1,18 +1,13 @@
-import subprocess
-import sys
 import os
+import sys
+import gunicorn.app.wsgiapp
 
 if __name__ == "__main__":
     port = os.environ.get("PORT", "8080")
-    gunicorn = subprocess.Popen(
-        [sys.executable, "-m", "gunicorn", "app:app",
-         "--bind", f"0.0.0.0:{port}",
-         "--workers", "1", "--timeout", "120"]
-    )
-    bot = subprocess.Popen(
-        [sys.executable, "-c",
-         "from app import bot_poll, init_db; init_db(); bot_poll()"]
-    )
-    exit_code = gunicorn.wait()
-    bot.terminate()
-    sys.exit(exit_code)
+    from app import init_db, set_webhook
+    init_db()
+    set_webhook()
+    sys.argv = ["gunicorn", "app:app",
+                "--bind", f"0.0.0.0:{port}",
+                "--workers", "1", "--timeout", "120"]
+    gunicorn.app.wsgiapp.run()

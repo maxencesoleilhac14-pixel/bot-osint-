@@ -270,7 +270,8 @@ last_update_id = 0
 
 def bot_poll():
     global last_update_id
-    mini_app_url = app.config.get("PUBLIC_URL", "") or "https://10.0.7.10:5000"
+    public_url = app.config.get("PUBLIC_URL", "") or os.environ.get("RAILWAY_PUBLIC_DOMAIN", f"https://{os.environ.get('RAILWAY_STATIC_URL', 'localhost:5000')}")
+    mini_app_url = public_url
     while True:
         try:
             url = f"{TELEGRAM_API}/getUpdates?timeout=30&offset={last_update_id + 1}"
@@ -1167,42 +1168,30 @@ def server_error(e):
 def init_db():
     with app.app_context():
         db.create_all()
-        # Add status column if missing
+        for col in ("status", "reg_ip", "reg_user_agent", "reg_headers", "last_ip", "telegram_id", "telegram_username", "telegram_first_name", "telegram_last_name", "telegram_photo_url"):
+            try:
+                db.session.execute(db.text(f"ALTER TABLE users ADD COLUMN {col} TEXT"))
+                db.session.commit()
+            except:
+                db.session.rollback()
         try:
-            db.session.execute(db.text("ALTER TABLE users ADD COLUMN status VARCHAR(20) DEFAULT 'actif'"))
-            db.session.commit()
+            admin = User.query.filter_by(username="admin").first()
+            if not admin:
+                admin = User(
+                    username="admin",
+                    email="admin@scarface-osint.local",
+                    is_admin=True,
+                )
+                admin.set_password("admin123")
+                db.session.add(admin)
+                db.session.commit()
+                log.info("Admin user created (admin / admin123)")
         except:
             db.session.rollback()
-        # Add tracking columns if missing
-        for col in ("reg_ip", "reg_user_agent", "reg_headers", "last_ip", "telegram_id"):
-            try:
-                db.session.execute(db.text(f"ALTER TABLE users ADD COLUMN {col} TEXT"))
-                db.session.commit()
-            except:
-                db.session.rollback()
-        for col in ("telegram_username", "telegram_first_name", "telegram_last_name", "telegram_photo_url"):
-            try:
-                db.session.execute(db.text(f"ALTER TABLE users ADD COLUMN {col} TEXT"))
-                db.session.commit()
-            except:
-                db.session.rollback()
-        admin = User.query.filter_by(username="admin").first()
-        if not admin:
-            admin = User(
-                username="admin",
-                email="admin@scarface-osint.local",
-                is_admin=True,
-            )
-            admin.set_password("admin123")
-            db.session.add(admin)
-            db.session.commit()
-            log.info("Admin user created (admin / admin123)")
-        # Init status for existing users
         for u in User.query.filter(User.status.is_(None)).all():
             u.status = "banni" if u.is_banned else "actif"
         db.session.commit()
 
-# Init database and start bot polling on module load (for gunicorn)
 init_db()
 if not os.environ.get("WERKZEUG_RUN_MAIN"):
     t = threading.Thread(target=bot_poll, daemon=True)

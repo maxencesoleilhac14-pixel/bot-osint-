@@ -165,36 +165,49 @@ def unauthorized():
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+_brix_session = None
+def _get_brix_session():
+    global _brix_session
+    if _brix_session is None:
+        s = requests.Session()
+        s.headers.update(BRIX_HEADERS)
+        try:
+            s.get("https://brixhub.net/", timeout=10)
+        except:
+            pass
+        _brix_session = s
+    return _brix_session
+
+def brix_request(method, path, **kwargs):
+    s = _get_brix_session()
+    kwargs.setdefault("timeout", 15)
+    r = s.request(method, f"{BRIX_BASE}{path}", **kwargs)
+    if r.status_code in (503, 504):
+        return {"data": {"results": [], "total": 0}, "error": {"type": "unavailable"}}, r.headers
+    if r.status_code == 403:
+        log.error(f"BrixHub 403 on {path}: {r.text[:500]}")
+    r.raise_for_status()
+    return r.json(), r.headers
+
 def brix_search(payload):
     payload.setdefault("flexible", True)
     payload.setdefault("per_page", 10)
-    r = requests.post(f"{BRIX_BASE}/search", json=payload, headers=BRIX_HEADERS, timeout=15)
-    if r.status_code in (503, 504):
-        return {"data": {"results": [], "total": 0}, "error": {"type": "unavailable"}}, r.headers
-    r.raise_for_status()
-    return r.json(), r.headers
+    return brix_request("POST", "/search", json=payload)
 
 def brix_lookup_email(email):
-    r = requests.get(f"{BRIX_BASE}/lookup/email/{email}", headers=BRIX_HEADERS, timeout=15)
-    r.raise_for_status()
-    return r.json(), r.headers
+    return brix_request("GET", f"/lookup/email/{email}")
 
 def brix_lookup_phone(phone):
-    r = requests.get(f"{BRIX_BASE}/lookup/phone/{phone}", headers=BRIX_HEADERS, timeout=15)
-    r.raise_for_status()
-    return r.json(), r.headers
+    return brix_request("GET", f"/lookup/phone/{phone}")
 
 def brix_me():
-    r = requests.get(f"{BRIX_BASE}/me", headers=BRIX_HEADERS, timeout=15)
-    r.raise_for_status()
-    return r.json(), r.headers
+    return brix_request("GET", "/me")
 
 def brix_lookup_breach(email):
-    r = requests.get(f"{BRIX_BASE}/lookup/breach/{email}", headers=BRIX_HEADERS, timeout=15)
-    if r.status_code == 200:
-        return r.json(), r.headers
-    # fallback: try email lookup
-    return brix_lookup_email(email)
+    try:
+        return brix_request("GET", f"/lookup/breach/{email}")
+    except:
+        return brix_lookup_email(email)
 
 @login_manager.user_loader
 def load_user(user_id):

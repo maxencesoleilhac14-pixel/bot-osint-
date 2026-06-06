@@ -6,7 +6,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "scarface-secret-key-change-in-product
 SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", f"sqlite:///{os.path.join(BASE_DIR, 'scarface.db')}")
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-BRIX_API_KEY = os.environ.get("BRIX_API_KEY", "brix_4IDqiWwoGV26FFECj5nfk9-qcSn6HyWnpNGK0yU8A6mdLAkV")
+BRIX_API_KEY = os.environ.get("BRIX_API_KEY", "brix_MvXUIsgucxgC__UrlLkjLtnaYuEuXQZCJ79MIiaznh_zR9Us")
 BRIX_BASE = os.environ.get("BRIX_BASE", "https://brixhub.net/api/v1")
 
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@scarface-osint.local")

@@ -1204,8 +1204,9 @@ def init_db():
             u.status = "banni" if u.is_banned else "actif"
         db.session.commit()
 
+init_db()
+set_webhook()
+
 if __name__ == "__main__":
-    init_db()
-    set_webhook()
     log.info("🚀 Scarface OSINT Web démarré sur http://127.0.0.1:5000")
     app.run(host="0.0.0.0", port=5000, debug=True)

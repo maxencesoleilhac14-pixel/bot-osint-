@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import requests
+import cloudscraper
 from flask import (
     Flask, render_template, request, redirect, url_for,
     flash, jsonify, session
@@ -169,12 +170,8 @@ _brix_session = None
 def _get_brix_session():
     global _brix_session
     if _brix_session is None:
-        s = requests.Session()
+        s = cloudscraper.create_scraper()
         s.headers.update(BRIX_HEADERS)
-        try:
-            s.get("https://brixhub.net/", timeout=10)
-        except:
-            pass
         _brix_session = s
     return _brix_session
 

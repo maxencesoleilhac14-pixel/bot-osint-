@@ -42,7 +42,11 @@ BRIX_BASE = app.config["BRIX_BASE"]
 BRIX_HEADERS = {
     "X-API-Key": BRIX_API_KEY,
     "Content-Type": "application/json",
-    "User-Agent": "ScarfaceWeb/1.0"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Accept": "application/json",
+    "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
+    "Referer": "https://brixhub.net/",
+    "Origin": "https://brixhub.net"
 }
 OXAPAY_API_KEY = app.config["OXAPAY_API_KEY"]
 OXAPAY_BASE = app.config["OXAPAY_BASE"]
